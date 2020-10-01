@@ -1,0 +1,2 @@
+* enable feature of sending words from user to user (backend)
+* better formulation of frontend
