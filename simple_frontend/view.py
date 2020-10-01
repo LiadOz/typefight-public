@@ -12,7 +12,11 @@ class View(tk.Tk):
         self.render = GameFrame(self)
 
     def render_game(self, game_data):
-        pass
+        self.render.clear_game()
+        for t in WordType:
+            for word in game_data[t]:
+                self.render.add_word(t, word)
+        self.render.set_player_message(game_data['current'])
 
     def _set_defaults(self):
         self.title('Typefight')
@@ -29,7 +33,7 @@ class View(tk.Tk):
         self.bind("<BackSpace>", send.remove_letter)
         self.bind("<space>", send.publish_current_word)
         self.bind("<Return>", send.switch_user)
-        # self.bind("<Tab>", self._switch_typing_mode)
+        self.bind("<Tab>", send.switch_typing_mode)
 
     def run(self):
         self.mainloop()

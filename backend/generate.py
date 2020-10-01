@@ -6,7 +6,7 @@ class WordGenerator:
         self.words = []
         with open('backend/words.txt', 'r') as f:
             for line in f:
-                self.words.append(line)
+                self.words.append(line.strip())
         random.shuffle(self.words)
 
     def get_word(self):

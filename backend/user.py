@@ -48,7 +48,6 @@ class UserData:
         return self.current_word.get_text()
 
     def publish_word(self):
-        print(self.get_current_word(), self.defend.queue[0])
         if self.mode == UserMode.ATTACK and \
            self.get_current_word() == self.attack.queue[0]:
             self.attack.get()
@@ -56,7 +55,6 @@ class UserData:
             return True
         elif self.mode == UserMode.DEFEND and \
                 self.get_current_word() == self.defend.queue[0]:
-            print('inside')
             self.defend.get()
             self.current_word = Word()
             return True
