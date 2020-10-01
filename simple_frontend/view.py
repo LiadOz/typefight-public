@@ -1,6 +1,6 @@
 import tkinter as tk
 import tkinter.font as tk_font
-from utility import WordType
+from common.utility import WordType
 
 
 class View(tk.Tk):

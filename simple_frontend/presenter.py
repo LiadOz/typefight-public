@@ -1,7 +1,6 @@
-from model import Model
-from view import View
-from utility import WordType
-import sys
+from .model import Model
+from .view import View
+from common.utility import WordType
 
 
 class Presenter:
@@ -19,17 +18,17 @@ class Presenter:
     def send_letter(self, event):
         print(event.char)
 
+    # the events could be removed using lambda function in view module
     def remove_letter(self, event=None):
         pass
 
     def publish_current_word(self, event=None):
         pass
 
-    def switch_user(self):
+    def switch_user(self, event=None):
         pass
 
 
 if __name__ == '__main__':
-    sys.path.append('../backend')
     app = Presenter()
     app.run()

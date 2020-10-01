@@ -1,16 +1,14 @@
-def get_attack():
-    words = "this is a test to test something".split(' ')
-    for word in words:
-        yield word
+import random
 
 
-def get_defend():
-    words = "thou shalt not muzzle the ox".split(' ')
-    for word in words:
-        yield word
+class WordGenerator:
+    def __init__(self):
+        self.words = []
+        with open('backend/words.txt', 'r') as f:
+            for line in f:
+                self.words.append(line)
+        random.shuffle(self.words)
 
-
-def get_rival():
-    words = "as it turns out kili is not wifi enabled".split(' ')
-    for word in words:
-        yield word
+    def get_word(self):
+        word = self.words.pop()
+        return word

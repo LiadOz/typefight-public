@@ -1,15 +1,14 @@
 import queue
-import enum
-from typed import Word
+from common.utility import UserMode, WordType, Word
+from functools import wraps
 
 
-class User:
+class UserData:
     def __init__(self):
         self.current_word = Word()
         self.defend = queue.Queue()
         self.attack = queue.Queue()
-        self.rival = queue.Queue()
-        self.mode = Mode.DEFEND
+        self.mode = UserMode.DEFEND
 
     def update_words(self, word_type, words):
         add_queue = self._get_queue(word_type)
@@ -20,22 +19,23 @@ class User:
     def get_words(self, word_type):
         return self._get_queue(word_type)
 
+    def get_mode(self):
+        return self.mode
+
     def _get_queue(self, word_type):
         add_queue = None
         if word_type == WordType.ATTACK:
             add_queue = self.attack
-        elif word_type == WordType.DEFEND:
-            add_queue = self.defend
         else:
-            add_queue = self.rival
+            add_queue = self.defend
         return add_queue
 
     # this should be only attack or defend
     def toggle_mode(self):
-        if self.mode == Mode.ATTACK:
-            self.mode = Mode.DEFEND
+        if self.mode == UserMode.ATTACK:
+            self.mode = UserMode.DEFEND
         else:
-            self.mode = Mode.ATTACK
+            self.mode = UserMode.ATTACK
         print(self.mode)
 
     def type_key(self, key):
@@ -49,17 +49,45 @@ class User:
 
     def publish_word(self):
         print(self.get_current_word(), self.defend.queue[0])
-        if self.mode == Mode.ATTACK and \
+        if self.mode == UserMode.ATTACK and \
            self.get_current_word() == self.attack.queue[0]:
             self.attack.get()
             self.current_word = Word()
             return True
-        elif self.mode == Mode.DEFEND and \
+        elif self.mode == UserMode.DEFEND and \
                 self.get_current_word() == self.defend.queue[0]:
             print('inside')
             self.defend.get()
             self.current_word = Word()
             return True
+        return False
+
+
+class User:
+    def __init__(self, game):
+        self.game = game
+
+    def _write_action(func):
+        @wraps(func)
+        def wrapper(inst, *args, **kwargs):
+            func(inst, *args, **kwargs)
+            return inst.get_data()
+        return wrapper
+
+    def get_data(self):
+        return self.game.get_data(self)
+
+    @_write_action
+    def type_key(self, key):
+        self.game.type_key(key)
+
+    @_write_action
+    def remove_previous(self):
+        self.game.remove_previous()
+
+    @_write_action
+    def publish_word(self):
+        self.publish_word()
 
 
 # Manages the active user
@@ -101,14 +129,3 @@ class UserManager:
 
     def publish_word(self):
         return self.current_user.publish_word()
-
-
-class Mode(enum.Enum):
-    ATTACK = 1
-    DEFEND = 2
-
-
-class WordType(enum.Enum):
-    ATTACK = 1
-    DEFEND = 2
-    RIVAL = 3
