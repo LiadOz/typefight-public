@@ -79,15 +79,18 @@ class User:
 
     @_write_action
     def type_key(self, key):
-        self.game.type_key(key)
+        self.game.type_key(self, key)
 
     @_write_action
     def remove_previous(self):
-        self.game.remove_previous()
+        self.game.remove_previous(self)
 
     @_write_action
     def publish_word(self):
-        self.publish_word()
+        self.game.publish_word(self)
+
+    def toggle_mode(self):
+        self.game.toggle_mode(self)
 
 
 # Manages the active user

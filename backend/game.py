@@ -35,25 +35,30 @@ class Game:
         return wrapper
 
     @_game_started
-    def type_key(self, key):
-        caller, _ = self._get_caller(self)
+    def type_key(self, user, key):
+        caller, _ = self._get_caller(user)
         caller.type_key(key)
 
     @_game_started
-    def remove_previous(self):
-        caller, _ = self._get_caller(self)
+    def remove_previous(self, user):
+        caller, _ = self._get_caller(user)
         caller.remove_previous()
 
     @_game_started
-    def publish_word(self):
-        caller, other = self._get_caller(self)
+    def publish_word(self, user):
+        caller, other = self._get_caller(user)
         word = caller.get_current_word()
         if caller.publish_word():
             other.update_words(WordType.DEFEND, [word])
 
     @_game_started
-    def get_data(self, caller):
-        caller, other = self._get_caller(self)
+    def toggle_mode(self, user):
+        caller, _ = self._get_caller(user)
+        caller.toggle_mode()
+
+    @_game_started
+    def get_data(self, user):
+        caller, other = self._get_caller(user)
         payload = {}
         payload[WordType.ATTACK] = list(
             caller.get_words(WordType.ATTACK).queue)
