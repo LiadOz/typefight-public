@@ -1,6 +1,8 @@
 import random
 
 
+# TODO: Make it possible for word to return, i.e. make a random choice of word
+# that is not currently available
 class WordGenerator:
     def __init__(self):
         self.words = []

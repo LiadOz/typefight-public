@@ -1,2 +1,2 @@
-* enable feature of sending words from user to user (backend)
-* better formulation of frontend
+* typeracer updated 32 times in 60 seconds
+* add tests
