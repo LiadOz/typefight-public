@@ -13,9 +13,12 @@ class View(tk.Tk):
 
     def render_game(self, game_data):
         self.render.clear_game()
-        for t in WordType:
-            for word in game_data[t]:
-                self.render.add_word(t, word)
+        for word in game_data['attack']:
+            self.render.add_word(WordType.ATTACK, word)
+        for word in game_data['defend']:
+            self.render.add_word(WordType.DEFEND, word)
+        for word in game_data['rival']:
+            self.render.add_word(WordType.RIVAL, word)
         self.render.set_player_message(game_data['current'])
 
     def _set_defaults(self):
@@ -25,7 +28,7 @@ class View(tk.Tk):
     def _set_keybindings(self):
         send = self.presenter
         # keybinding for each english letter
-        for x in range(ord('a'), ord('z')+1):
+        for x in range(ord('a'), ord('z') + 1):
             letter = chr(x)
             self.bind(letter, send.send_letter)
             self.bind(letter.upper(), send.send_letter)

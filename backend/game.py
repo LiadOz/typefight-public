@@ -1,6 +1,6 @@
 from backend.user import UsersManager
-from common.utility import WordType
 from backend.generate import WordGenerator
+from common.utility import WordType
 
 
 class Game:

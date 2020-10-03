@@ -152,12 +152,14 @@ class UsersManager:
     def get_data(self, user):
         caller, other = self._get_caller(user)
         payload = {}
-        payload[WordType.ATTACK] = list(
-            caller.get_words(WordType.ATTACK).queue)
-        payload[WordType.DEFEND] = list(
-            caller.get_words(WordType.DEFEND).queue)
-        payload[WordType.RIVAL] = list(other.get_words(WordType.DEFEND).queue)
-        payload['mode'] = caller.get_mode()
+        # these variables need to be set in constants
+        payload['attack'] = list(caller.get_words(WordType.ATTACK).queue)
+        payload['defend'] = list(caller.get_words(WordType.DEFEND).queue)
+        payload['rival'] = list(other.get_words(WordType.DEFEND).queue)
+        if caller.get_mode() == UserMode.ATTACK:
+            payload['mode'] = 'attack'
+        else:
+            payload['mode'] = 'defend'
         payload['current'] = caller.get_current_word()
         return payload
 

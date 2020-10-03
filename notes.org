@@ -1,2 +1,7 @@
 * typeracer updated 32 times in 60 seconds
-* add tests
+* add pending changes feature
+* add words to users every few seconds
+  This could mean splitting into 2 services
+* deployment
+[[https://flask.palletsprojects.com/en/1.1.x/deploying/#deployment][link]]
+* change variables in user payload to constants
