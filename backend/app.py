@@ -1,5 +1,6 @@
 from backend.game import Game
-from flask import Flask, request
+from flask import Flask, request, render_template
+from flask_socketio import SocketIO, emit
 from json import dumps
 
 game = Game()
@@ -7,11 +8,17 @@ game.demo_setup()
 user_1, user_2 = None, None
 active_users = 0
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 's'
+socket = SocketIO(app, logger=True)
+
+
+def run():
+    socket.run(app)
 
 
 @app.route('/')
 def start():
-    return 'you are connected'
+    return render_template('test.html')
 
 
 @app.route('/register')
@@ -31,10 +38,16 @@ def curr_user(num):
     return user_2
 
 
-@app.route('/get_data', methods=['GET', 'POST'])
-def data():
-    user = curr_user(request.form['id'])
-    return dumps(user.get_data())
+# This is not used to constantly send data!
+@socket.on('get_data', namespace='/game')
+def data(json):
+    data = curr_user(json['id']).get_data()
+    emit('data_resp', dumps(data), namespace='/data' + json['id'])
+
+
+def send_data(u_id, data):
+    print(u_id)
+    socket.emit('data', dumps(data), namespace='/data' + u_id)
 
 
 @app.route('/type', methods=['GET', 'POST'])
@@ -63,3 +76,6 @@ def toggle():
     user = curr_user(request.form['id'])
     user.toggle_mode()
     return ''
+
+
+game.set_broadcast(send_data)

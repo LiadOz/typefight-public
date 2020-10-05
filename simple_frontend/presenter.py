@@ -1,18 +1,20 @@
 from functools import wraps
+from json import loads
 from .model import Model
 from .view import View
 
 
 class Presenter:
     def __init__(self):
-        self.model = Model()
+        self.model = Model(self.render_game)
         self.view = View(self)
 
+    # currently does nothing
     def _write_action(func):
         @wraps(func)
         def wrapper(inst, *args, **kwargs):
-            ret = func(inst, *args, **kwargs)
-            inst.render_game(ret)
+            func(inst, *args, **kwargs)
+            # inst.render_game(ret)
 
         return wrapper
 
@@ -20,10 +22,13 @@ class Presenter:
         # self.render_game()
         self.view.run()
 
-    def render_game(self, data=None):
-        if not data:
-            data = self.model.get_data()
-        self.view.render_game(data)
+    def render_game(self, data):
+        # def render_game(self, data=None):
+        # if not data:
+        #     data = self.model.get_data()
+        print('starting')
+        print(data)
+        self.view.render_game(loads(data))
 
     @_write_action
     def send_letter(self, event):
@@ -45,8 +50,3 @@ class Presenter:
 
     def switch_typing_mode(self, event=None):
         self.model.switch_typing_mode()
-
-
-if __name__ == '__main__':
-    app = Presenter()
-    app.run()

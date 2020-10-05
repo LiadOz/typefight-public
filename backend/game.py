@@ -34,6 +34,9 @@ class Game:
             self._start_game()
         return user
 
+    def set_broadcast(self, func):
+        self.manager.set_broadcast(func)
+
     def _start_game(self):
         self.manager.start_game()
         self.initialized = True

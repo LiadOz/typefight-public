@@ -1,7 +1,10 @@
-* typeracer updated 32 times in 60 seconds
+* fix user caller into a good pardigm
+it needs to have if and elif without else
 * add pending changes feature
-* add words to users every few seconds
-  This could mean splitting into 2 services
 * deployment
 [[https://flask.palletsprojects.com/en/1.1.x/deploying/#deployment][link]]
 * change variables in user payload to constants
+* figure out how to correctly emit changes in UsersManager
+  the backend will own a broadcaster which is given to it by the server
+* change the current model presenter pardigm
+The model should actually be the backend

@@ -13,13 +13,13 @@ class View(tk.Tk):
 
     def render_game(self, game_data):
         self.render.clear_game()
-        for word in game_data['attack']:
+        for word in game_data['ATTACK']:
             self.render.add_word(WordType.ATTACK, word)
-        for word in game_data['defend']:
+        for word in game_data['DEFEND']:
             self.render.add_word(WordType.DEFEND, word)
-        for word in game_data['rival']:
+        for word in game_data['RIVAL']:
             self.render.add_word(WordType.RIVAL, word)
-        self.render.set_player_message(game_data['current'])
+        self.render.set_player_message(game_data['CURRENT'])
 
     def _set_defaults(self):
         self.title('Typefight')

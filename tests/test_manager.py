@@ -6,6 +6,7 @@ from common.utility import WordType
 class TestManager(unittest.TestCase):
     def setUp(self):
         self.manager = UsersManager()
+        self.manager.set_broadcast(lambda x, y: None)
 
     def test_not_init(self):
         with self.assertRaises(Exception):
@@ -19,7 +20,7 @@ class TestManager(unittest.TestCase):
 
     def test_game_started(self):
         self.manager.start_game()
-        self.manager.get_data(None)
+        self.manager.get_data(self.manager.user_1.interface)
 
     def test_attack(self):
         m = self.manager
@@ -44,3 +45,16 @@ class TestManager(unittest.TestCase):
             m.user_2.data.defend.queue[0]
         with self.assertRaises(IndexError):
             m.user_1.data.defend.queue[0]
+
+    def test_get_users(self):
+        man = self.manager
+        p1 = man.user_1
+        p2 = man.user_2
+        self.assertEqual(p1.data, man._get_player(p1.interface))
+        self.assertEqual(p2.data, man._get_player(p2.interface))
+        self.assertEqual(p1.data, man._get_rival(p2.interface))
+        self.assertEqual(p2.data, man._get_rival(p1.interface))
+        with self.assertRaises(Exception):
+            man._get_player(5)
+        with self.assertRaises(Exception):
+            man._get_rival(5)
