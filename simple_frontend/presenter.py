@@ -23,11 +23,6 @@ class Presenter:
         self.view.run()
 
     def render_game(self, data):
-        # def render_game(self, data=None):
-        # if not data:
-        #     data = self.model.get_data()
-        print('starting')
-        print(data)
         self.view.render_game(loads(data))
 
     @_write_action

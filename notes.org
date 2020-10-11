@@ -3,8 +3,13 @@ it needs to have if and elif without else
 * add pending changes feature
 * deployment
 [[https://flask.palletsprojects.com/en/1.1.x/deploying/#deployment][link]]
-* change variables in user payload to constants
 * figure out how to correctly emit changes in UsersManager
   the backend will own a broadcaster which is given to it by the server
 * change the current model presenter pardigm
 The model should actually be the backend
+* make socket communication with user only outgoing and ingoing
+the data of a request will tell what function should be called
+* change from namespaces into rooms
+[[https://stackoverflow.com/questions/48036955/socket-io-switching-namespaces][link]]
+* find where to put the word generator
+* create tests for regiters
