@@ -2,7 +2,6 @@ from functools import wraps
 from json import dumps
 from flask_socketio import emit
 from enum import Enum
-from pdb import set_trace as bp
 
 
 class Register:
@@ -64,17 +63,18 @@ class SocketRegister(Register):
         self.endpoint = endpoint
 
     def register_in(self, data):
-        self.obj.on_event(data.event, data.func)
+        self.obj.on_event(data.event, data.func, namespace=self.endpoint)
         print(f"registering event '{data.event}' to '{self.endpoint}'")
 
     def _notify_function(self, data):
         if data.func:
-            self.obj.emit(data.event, dumps(data.func()))
+            self.obj.emit(
+                data.event, dumps(data.func()), namespace=self.endpoint)
         elif data.data:
-            self.obj.emit(data.event, data.data)
+            self.obj.emit(data.event, data.data, namespace=self.endpoint)
 
     def _out_function(self, data):
-        emit(data.event, data.data)
+        emit(data.event, data.data, namespace=self.endpoint)
 
 
 class RequestRegister(Register):
@@ -96,33 +96,22 @@ class ObjectRegistration:
     def set_obj(self, obj):
         self.obj = obj
 
-    def register_all(self):
-        self.register_out()
-        self.register_notify()
-        self.register_in()
+    def replace_notify(self, func, data):
+        func_name = func.__name__
+        new_func = self.register.register_notify(func, data)
+        new_func.__name__ = func_name
+        setattr(self.obj, func_name, new_func)
 
-    def register_in(self):
-        pass
-
-    def register_out(self):
-        pass
-
-    def register_notify(self):
-        pass
-
-
-class NewObjectRegistration:
-    """
-    Registers a certain classes methods
-    """
-
-    def __init__(self, register):
-        self.register = register
+    def replace_out(self, func, data):
+        func_name = func.__name__
+        new_func = self.register.register_out(func, data)
+        new_func.__name__ = func_name
+        setattr(self.obj, func_name, new_func)
 
     def register_all(self):
-        self.register_out()
+        # this order is important
         self.register_notify()
-
+        self.register_out()
         self.register_in()
 
     def register_in(self):
@@ -136,27 +125,49 @@ class NewObjectRegistration:
 
 
 class PlayerRegistration(ObjectRegistration):
-    def register_all(self):
-        reg = self.register
-        out_data = RegisterData('out', self.obj.formatted_data)
-        self.obj.type_key = reg.register_notify(
-            self.obj.type_key, out_data)
-        self.obj.remove_previous = reg.register_notify(
-            self.obj.remove_previous, out_data)
-        self.obj.add_word = reg.register_notify(
-            self.obj.add_word, out_data)
-        self.obj.remove_word = reg.register_notify(
-            self.obj.remove_word, out_data)
-
-        reg.register_in(
+    def register_in(self):
+        self.register.register_in(
             RegisterData('type', lambda x: self.obj.type_key(x['key'])))
-        reg.register_in(RegisterData('remove', self.obj.remove_previous, ''))
+        self.register.register_in(
+            RegisterData('remove', self.obj.remove_previous, ''))
+        self.register.register_in(
+            RegisterData('get_data', self.obj.formatted_data, ''))
+
+    def register_out(self):
+        self.replace_out(
+            self.obj.formatted_data, RegisterData(event='get_data'))
+
+    def register_notify(self):
+        out_data = RegisterData('out', self.obj.formatted_data)
+        self.replace_notify(self.obj.type_key, out_data)
+        self.replace_notify(self.obj.remove_previous, out_data)
+        self.replace_notify(self.obj.add_word, out_data)
+        self.replace_notify(self.obj.remove_word, out_data)
 
 
 class PlayerRegistrationQueue(PlayerRegistration):
-    def register_all(self):
-        super().register_all()
+    def register_in(self):
+        super().register_in()
 
         self.register.register_in(
             RegisterData('publish', self.obj.publish_word))
         self.register.register_in(RegisterData('toggle', self.obj.toggle_mode))
+
+
+class MatchCreatorReg(ObjectRegistration):
+    def register_in(self):
+        self.register.register_in(
+            RegisterData(event='login', func=self.obj.login_user))
+
+    def register_out(self):
+        self.replace_out(
+            self.obj.login_user, RegisterData(event='login'))
+
+
+class GameDataReg(ObjectRegistration):
+    def register_notify(self):
+        out_data = RegisterData('out', self.obj.formatted_data)
+        self.replace_notify(self.obj.type_key, out_data)
+        self.replace_notify(self.obj.remove_previous, out_data)
+        self.replace_notify(self.obj.add_word, out_data)
+        self.replace_notify(self.obj.remove_word, out_data)

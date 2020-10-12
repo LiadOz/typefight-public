@@ -12,14 +12,8 @@ class View(tk.Tk):
         self.render = GameFrame(self)
 
     def render_game(self, game_data):
-        self.render.clear_game()
-        for word in game_data['ATTACK']:
-            self.render.add_word(WordType.ATTACK, word)
-        for word in game_data['DEFEND']:
-            self.render.add_word(WordType.DEFEND, word)
-        for word in game_data['RIVAL']:
-            self.render.add_word(WordType.RIVAL, word)
-        self.render.set_player_message(game_data['CURRENT'])
+        for k, v in game_data.items():
+            self.render.render_frame(k, v)
 
     def _set_defaults(self):
         self.title('Typefight')
@@ -50,6 +44,19 @@ class GameFrame(tk.Frame):
 
     def set_player_message(self, message):
         self.player.set_message(message)
+
+    def render_frame(self, user, payload):
+        frame = None
+        if user == 'PLAYER':
+            frame = self.player
+        elif user == 'RIVAL':
+            frame = self.rival
+        frame.clear_frame()
+        for word in payload['ATTACK']:
+            frame.add_word(WordType.ATTACK, word)
+        for word in payload['DEFEND']:
+            frame.add_word(WordType.DEFEND, word)
+        frame.set_message(payload['CURRENT'])
 
     def add_word(self, w_type, word):
         if w_type == WordType.RIVAL:
@@ -113,9 +120,11 @@ class UserFrame(tk.LabelFrame):
 
     def clear_frame(self):
         self.set_message('')
-        for k, v in self.attack.items():
+        attack = self.attack.items()
+        defense = self.defense.items()
+        for k, v in attack:
             v.grid_forget()
-        for k, v in self.defense.items():
+        for k, v in defense:
             v.grid_forget()
         self.attack = {}
         self.defense = {}

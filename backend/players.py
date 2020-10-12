@@ -1,178 +1,144 @@
-from common.utility import Word, WordType
-from backend.player_words import create_player_words, PlayerWordsType
-from enum import Enum
+from common.utility import WordType
+from backend.player_words import create_player_data, GameData, PlayerDataType
 
 
-def mediator_factory(count):
+def executor_factory(count):
     if count == 1:
         return None
     if count == 2:
-        return DuelMediator()
+        return DuelExecutor()
     else:
-        return RoyaleMediator()
+        return RoyaleExecutor()
 
 
-class PlayerMediator:
-    def register_player(self, player):
-        pass
-
-    def send_action(self, caller, action):
-        pass
-
-
-class DuelMediator(PlayerMediator):
+class Executor:
     def __init__(self):
+        self.data = GameData()
+
+    def register_user(self, player_id, player_data):
+        pass
+
+    def add_word(self, caller_id, w_type, word):
+        self.data.add_word(caller_id, w_type, word)
+
+    def remove_word(self, caller_id, w_type, word):
+        self.data.remove_word(caller_id, w_type, word)
+
+    def type_key(self, caller_id, key):
+        self.data.type_key(caller_id, key)
+
+    def remove_key(self, caller_id):
+        self.data.remove_key(caller_id)
+
+    def publish_word(self, caller_id):
+        pass
+
+    def toggle_mode(self, caller_id):
+        self.data.toggle_mode(caller_id)
+
+    def get_mode(self, caller_id):
+        return self.data.get_mode(caller_id)
+
+
+class DuelExecutor(Executor):
+    def __init__(self):
+        super().__init__()
         self.registered = 0
 
-    def register_player(self, player):
+    def register_player(self, player_id, player_data):
         if self.registered == 0:
-            self.player_1 = player
-            self.u_id_1 = player.u_id
-            self.registered += 1
+            self.player_1 = player_id
+            self.data.add_player(player_id, player_data)
         elif self.registered == 1:
-            self.player_2 = player
-            self.u_id_2 = player.u_id
-            self.registered += 1
+            self.player_2 = player_id
+            self.data.add_player(player_id, player_data)
         else:
             raise Exception('Only two users allowed in duel')
+        self.registered += 1
 
-    def send_action(self, caller, action):
-        return self.get_opponent(caller).recieve_action(action)
-
-    def get_opponent(self, caller):
-        # this should be changed to depend on player_id so that you
-        # could change the functions of a player
-        if caller.u_id == self.u_id_1:
+    def get_opponent(self, caller_id):
+        if caller_id == self.player_1:
             return self.player_2
-        if caller.u_id == self.u_id_2:
+        elif caller_id == self.player_2:
             return self.player_1
-        raise Exception('Unknown caller')
+        else:
+            raise Exception('Unknown caller')
+
+    def publish_word(self, caller_id):
+        word = self.data.publish_word(caller_id)
+        if word:
+            self.data.add_word(
+                self.get_opponent(caller_id), WordType.DEFEND, word)
+
+    def get_my_data(self, caller_id):
+        return self.data.player_data(caller_id)
+
+    def player_data(self, caller_id):
+        payload = {}
+        payload['PLAYER'] = self.data.player_data(caller_id)
+        payload['RIVAL'] = self.data.player_data(self.get_opponent(caller_id))
+        return payload
 
 
-class RoyaleMediator(PlayerMediator):
+class RoyaleExecutor(Executor):
     pass
-
-
-class Action:
-    def __init__(self, action, data):
-        self.action = action
-        self.data = data
-
-
-class ActionType(Enum):
-    ATTACK = 1
-    DEFEND = 2
-    TYPE = 3
-    GET_DEFEND = 4
-    GET_ATTACK = 5
-
-
-class ActionExecuter:
-    def __init__(self, player):
-        self.player = player
-
-    def execute(self, action):
-        pass
-
-
-class SimpleExecuter(ActionExecuter):
-    def execute(self, action):
-        if action.action is ActionType.ATTACK:
-            self.player.add_word(WordType.DEFEND, action.data)
-            print('remove word', self.player.add_word)
-        elif action.action is ActionType.GET_DEFEND:
-            return self.player.get_data()[WordType.DEFEND]
 
 
 class IPlayer:
-    def __init__(self, mediator, u_id):
+    def __init__(self, executor, u_id, player_data_type):
         self.u_id = u_id
-        self.mediator = mediator
-        self.mediator.register_player(self)
-
-    def recieve_action(self, action):
-        pass
+        self.executor = executor
+        self.executor.register_player(u_id,
+                                      create_player_data(player_data_type))
 
 
 class Player(IPlayer):
-    def __init__(self, mediator, player_words_type, executer, u_id):
-        super().__init__(mediator, u_id)
-        self.current_word = Word()
-        self.words = create_player_words(player_words_type)
-        self.executer = executer(self)
+    def __init__(self, executor, u_id, player_data_type):
+        super().__init__(executor, u_id, player_data_type)
 
     def type_key(self, key):
-        self.current_word.add_letter(key)
+        self.executor.type_key(self.u_id, key)
 
     def remove_previous(self):
-        self.current_word.remove_letter()
+        self.executor.remove_key(self.u_id)
 
     def add_word(self, w_type, word):
-        self.words.add_word(w_type, word)
+        self.executor.add_word(self.u_id, w_type, word)
 
     def remove_word(self, w_type, word):
-        self.words.remove_word(w_type, word)
+        self.executor.remove_word(self.u_id, w_type, word)
 
     def publish_word(self):
-        pass
-
-    def get_data(self):
-        payload = self.words.format()
-        payload['CURRENT'] = self.current_word.get_text()
-        return payload
-
-    def recieve_action(self, action):
-        return self.executer.execute(action)
-
-
-class HumanPlayer(Player):
-    def __init__(self, *args):
-        super().__init__(*args)
-
-    def get_game_data(self):
-        payload = self.get_data()
-        rival = self.mediator.send_action(self,
-                                          Action(ActionType.GET_DEFEND, None))
-        payload[WordType.RIVAL] = rival
-        return payload
-
-    def formatted_data(self):
-        original = self.get_game_data()
-        ret = {}
-        for w_type in WordType:
-            ret[w_type.value] = original[w_type]
-        for k in original:
-            if k in WordType:
-                continue
-            ret[k] = original[k]
-        return ret
-
-
-class BotPlayer(Player):
-    pass
-
-
-class PlayerQueueAndMode(HumanPlayer):
-    def __init__(self, mediator, u_id):
-        super().__init__(mediator, PlayerWordsType.QUEUE, SimpleExecuter, u_id)
-        self.mode = WordType.DEFEND
-
-    def publish_word(self):
-        q = self.get_data()[self.mode]
-        if q and q[0] == self.current_word.get_text():
-            if self.mode == WordType.ATTACK:
-                self.mediator.send_action(self, Action(ActionType.ATTACK,
-                                                       q[0]))
-            self.current_word.reset_word()
-            self.remove_word(self.mode, 0)
+        self.executor.publish_word(self.u_id)
 
     def toggle_mode(self):
-        if self.mode == WordType.ATTACK:
-            self.mode = WordType.DEFEND
-        else:
-            self.mode = WordType.ATTACK
+        self.executor.toggle_mode(self.u_id)
+
+    def get_data(self):
+        return self.executor.player_data(self.u_id)
+
+    def get_my_data(self):
+        return self.executor.get_my_data(self.u_id)
+
+    def get_mode(self):
+        return self.executor.get_mode(self.u_id)
+
+    def formatted_data(self):
+        payload = self.get_data()
+        new_payload = {}
+        for k, v in payload.items():
+            temp = {}
+            for i, j in v.items():
+                if i in WordType:
+                    temp[i.value] = j
+                elif j in WordType:
+                    temp[i] = j.value
+                else:
+                    temp[i] = j
+            new_payload[k] = temp
+        return new_payload
 
 
-class PlayerSet(HumanPlayer):
-    def __init__(self, mediator):
-        super().__init__(mediator, PlayerWordsType.SET, SimpleExecuter)
+class QueuePlayer(Player):
+    def __init__(self, executor, u_id):
+        super().__init__(executor, u_id, PlayerDataType.QUEUE)
