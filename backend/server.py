@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_socketio import SocketIO
 from backend.register import SocketRegister, MatchCreatorReg
-from backend.match import MatchCreator
+from backend.match import MatchCreator, PlayerCreator
 from backend.user import IdStore
 import logging
 
@@ -11,7 +11,8 @@ app.config.from_object('backend.config.Config')
 sio = SocketIO(app, logger=True)
 
 register = SocketRegister(sio, '')
-match = MatchCreator(register, IdStore())
+player_creator = PlayerCreator(register, IdStore())
+match = MatchCreator(player_creator)
 MatchCreatorReg(match, register).register_all()
 
 
