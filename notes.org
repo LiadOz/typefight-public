@@ -13,3 +13,4 @@ the data of a request will tell what function should be called
 [[https://stackoverflow.com/questions/48036955/socket-io-switching-namespaces][link]]
 * find where to put the word generator
 * create tests for regiters
+* rework registers to only subclass

@@ -1,173 +1,33 @@
-from functools import wraps
-from json import dumps
-from flask_socketio import emit
-from enum import Enum
+from backend.registers.register import register_factory
+from backend.game.player_factory import player_factory
+from backend.registers.registors import player_reg_factory, MatchPlayerReg
+from backend.match import MatchPlayer, BotMatchPlayer
 
 
-class Register:
-    """
-    Handles the how things are registered
-    """
+class MainRegister:
+    def __init__(self, register_type, obj, endpoint):
+        self.register = register_factory(register_type, obj, endpoint)
+        self.player_factory = PlayerFactory(self.register)
 
-    def __init__(self, obj, endpoint):
-        self.obj = obj
-        self.endpoint = endpoint
-
-    def child_register(self, sub_endpoint):
-        return type(self)(self.obj, self.endpoint + sub_endpoint)
-
-    def register_in(self, func, data):
-        pass
-
-    def create_callback(func, callback, data, ret_value=True):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            ret = func(*args, **kwargs)
-            if ret_value:
-                data.data = ret
-            callback(data)
-
-        return wrapper
-
-    def register_out(self, func, data):
-        print(f"registering event '{data.event}' from '{self.endpoint}'")
-        return Register.create_callback(
-            func, self._out_function, data)
-
-    def register_notify(self, func, data):
-        print(f"registering event '{data.event}' from '{self.endpoint}'")
-        return Register.create_callback(
-            func, self._notify_function, data, False)
-
-    def _notify_function(self):
-        pass
-
-    def _out_function(self):
-        pass
+    def create_user(self, player_type, player_id):
+        return self.player_factory.create_user(player_type,
+                                               player_id)
 
 
-class ResgisterType(Enum):
-    pass
-
-
-class RegisterData:
-    def __init__(self, event=None, func=None, data=None):
-        self.event = event
-        self.data = data
-        self.func = func
-
-
-class SocketRegister(Register):
-    def __init__(self, obj, endpoint):
-        self.obj = obj
-        self.endpoint = endpoint
-
-    def register_in(self, data):
-        self.obj.on_event(data.event, data.func, namespace=self.endpoint)
-        print(f"registering event '{data.event}' to '{self.endpoint}'")
-
-    def _notify_function(self, data):
-        if data.func:
-            self.obj.emit(
-                data.event, dumps(data.func()), namespace=self.endpoint)
-        elif data.data:
-            self.obj.emit(data.event, data.data, namespace=self.endpoint)
-
-    def _out_function(self, data):
-        emit(data.event, data.data, namespace=self.endpoint)
-
-
-class RequestRegister(Register):
-    pass
-
-
-class ObjectRegistration:
-    """
-    Registers a certain classes methods
-    """
-
-    def __init__(self, obj=None, register=None):
-        self.obj = obj
+class PlayerFactory:
+    def __init__(self, register):
         self.register = register
 
-    def set_register(self, register):
-        self.register = register
-
-    def set_obj(self, obj):
-        self.obj = obj
-
-    def replace_notify(self, func, data):
-        func_name = func.__name__
-        new_func = self.register.register_notify(func, data)
-        new_func.__name__ = func_name
-        setattr(self.obj, func_name, new_func)
-
-    def replace_out(self, func, data):
-        func_name = func.__name__
-        new_func = self.register.register_out(func, data)
-        new_func.__name__ = func_name
-        setattr(self.obj, func_name, new_func)
-
-    def register_all(self):
-        # this order is important
-        self.register_notify()
-        self.register_out()
-        self.register_in()
-
-    def register_in(self):
-        pass
-
-    def register_out(self):
-        pass
-
-    def register_notify(self):
-        pass
-
-
-class PlayerRegistration(ObjectRegistration):
-    def register_in(self):
-        self.register.register_in(
-            RegisterData('type', lambda x: self.obj.type_key(x['key'])))
-        self.register.register_in(
-            RegisterData('remove', self.obj.remove_previous, ''))
-        self.register.register_in(
-            RegisterData('get_data', self.obj.formatted_data, ''))
-
-    def register_out(self):
-        self.replace_out(
-            self.obj.formatted_data, RegisterData(event='get_data'))
-
-    def register_notify(self):
-        out_data = RegisterData('out', self.obj.formatted_data)
-        self.replace_notify(self.obj.type_key, out_data)
-        self.replace_notify(self.obj.remove_previous, out_data)
-        self.replace_notify(self.obj.add_word, out_data)
-        self.replace_notify(self.obj.remove_word, out_data)
-
-
-class PlayerRegistrationQueue(PlayerRegistration):
-    def register_in(self):
-        super().register_in()
-
-        self.register.register_in(
-            RegisterData('publish', self.obj.publish_word))
-        self.register.register_in(RegisterData('toggle', self.obj.toggle_mode))
-
-
-class MatchCreatorReg(ObjectRegistration):
-    def register_in(self):
-        self.register.register_in(
-            RegisterData(event='login', func=self.obj.login_user))
-
-    def register_out(self):
-        self.replace_out(
-            self.obj.login_user, RegisterData(event='login'))
-
-
-class GameDataReg(ObjectRegistration):
-    def register_notify(self):
-        out_data = RegisterData('out', self.obj.formatted_data)
-        self.replace_notify(self.obj.type_key, out_data)
-        self.replace_notify(self.obj.remove_previous, out_data)
-        self.replace_notify(self.obj.add_word, out_data)
-        self.replace_notify(self.obj.remove_word, out_data)
+    def create_user(self, player_type, player_id):
+        player = player_factory(player_type)(player_id)
+        register = self.register.child_register(f"/data{player_id}")
+        player_reg = player_reg_factory(player_type)
+        if player_reg:
+            player_reg = player_reg(player, register)
+            player = MatchPlayer(player, player_id, player_reg)
+            # this should all be done in one step
+            # maybe the matchplayerreg handles the registration of player
+            MatchPlayerReg(player, register).register_all()
+        else:
+            player = BotMatchPlayer(player)
+        return player

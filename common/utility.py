@@ -1,15 +1,9 @@
-import enum
+from enum import Enum
 
 
-class UserMode(enum.Enum):
+class WordType(Enum):
     ATTACK = 'ATTACK'
     DEFEND = 'DEFEND'
-
-
-class WordType(enum.Enum):
-    ATTACK = 'ATTACK'
-    DEFEND = 'DEFEND'
-    RIVAL = 'RIVAL'
 
 
 class Word:
@@ -33,9 +27,3 @@ class Word:
 
     def get_text(self):
         return ''.join(self.letters)
-
-
-class Change(enum.Enum):
-    ADD = 'ADD'
-    REMOVE = 'REMOVE'
-    CHANGE = 'CHANGE'

@@ -6,8 +6,8 @@ from .view import View
 
 class Presenter:
     def __init__(self):
-        self.model = Model(self.render_game)
         self.view = View(self)
+        self.model = Model(self.render_game, self.render_change)
 
     # currently does nothing
     def _write_action(func):
@@ -24,6 +24,9 @@ class Presenter:
 
     def render_game(self, data):
         self.view.render_game(loads(data))
+
+    def render_change(self, data):
+        self.view.render_change(loads(data))
 
     @_write_action
     def send_letter(self, event):

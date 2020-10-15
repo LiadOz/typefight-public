@@ -1,4 +1,5 @@
 from common.utility import WordType, Word
+from backend.game.changes import PlayerChanges
 from queue import Queue
 from enum import Enum
 
@@ -34,6 +35,12 @@ class GameData:
     def get_mode(self, caller_id):
         return self.mapping[caller_id].get_mode()
 
+    def fetch_changes(self, caller_id, fetcher):
+        return self.mapping[caller_id].fetch_changes(fetcher)
+
+    def add_fetcher(self, caller_id, fetcher):
+        return self.mapping[caller_id].add_fetcher(fetcher)
+
 
 class PlayerData:
     def __init__(self, attack_container, defend_container, formatter):
@@ -41,23 +48,34 @@ class PlayerData:
         self.defend = defend_container()
         self.current_word = Word()
         self.formatter = formatter(self)
+        self.changes = PlayerChanges()
 
     def add_word(self, w_type, word):
         self.get_container(w_type).add(word)
+        self.changes.add_word(w_type, word)
         return True
 
     def remove_word(self, w_type, word):
         self.get_container(w_type).remove(word)
+        self.changes.remove_word(w_type, word)
         return True
 
     def type_key(self, key):
         self.current_word.add_letter(key)
+        self.changes.add_letter(key)
 
     def remove_key(self):
         self.current_word.remove_letter()
+        self.changes.remove_letter()
 
     def publish_word(self):
         pass
+
+    def fetch_changes(self, fetcher):
+        self.changes.fetch_changes(fetcher)
+
+    def add_fetcher(self, fetcher):
+        self.changes.add_fecther(fetcher)
 
     def format(self):
         return self.formatter.format()
@@ -82,11 +100,12 @@ class PlayerDataQueue(PlayerData):
         li = self.get_container(self.mode).get_data()
         if li and li[0] == self.current_word.get_text():
             word = li[0]
-            self.remove_word(self.mode, 0)
+            self.remove_word(self.mode, word)
             self.current_word.reset_word()
+            self.changes.clear_word()
             if self.mode == WordType.ATTACK:
-                return word
-        return ''
+                return self.mode, word
+        return self.mode, ''
 
     def toggle_mode(self):
         if self.mode == WordType.ATTACK:
@@ -102,7 +121,26 @@ class PlayerDataQueue(PlayerData):
 
 
 class PlayerDataSet(PlayerData):
-    pass
+    def __init__(self):
+        super().__init__(WordSet, WordSet, WordsFormatter)
+        self.mode = WordType.DEFEND
+
+    def publish_word(self):
+        current = self.current_word.get_text()
+        mode, ret = None, ''
+        if current in self.get_container(WordType.ATTACK).get_data():
+            mode = WordType.ATTACK
+            ret = current
+        elif current in self.get_container(WordType.DEFEND).get_data():
+            mode = WordType.DEFEND
+        if mode:
+            self.remove_word(mode, current)
+            self.current_word.reset_word()
+            self.changes.clear_word()
+        return mode, ret
+
+    def format(self):
+        return self.formatter.format()
 
 
 class WordsContainer:
@@ -154,11 +192,10 @@ class WordSet(WordsContainer):
         self.container.add(word)
 
     def remove(self, word):
-        # ignores the word and pops
         self.container.remove(word)
 
     def get_data(self):
-        return self.container.copy()
+        return list(self.container)
 
 
 class WordsFormatter:

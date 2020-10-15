@@ -15,6 +15,10 @@ class View(tk.Tk):
         for k, v in game_data.items():
             self.render.render_frame(k, v)
 
+    def render_change(self, changes):
+        for k, v in changes.items():
+            self.render.render_changes(k, v)
+
     def _set_defaults(self):
         self.title('Typefight')
         self.focus_set()
@@ -52,11 +56,35 @@ class GameFrame(tk.Frame):
         elif user == 'RIVAL':
             frame = self.rival
         frame.clear_frame()
+        frame.set_message(payload['CURRENT'])
         for word in payload['ATTACK']:
             frame.add_word(WordType.ATTACK, word)
         for word in payload['DEFEND']:
             frame.add_word(WordType.DEFEND, word)
-        frame.set_message(payload['CURRENT'])
+
+    def render_changes(self, player, changes):
+        user = None
+        if player == 'PLAYER':
+            user = self.player
+        elif player == 'RIVAL':
+            user = self.rival
+        for c_type, data in changes:
+            if c_type == 'ADD_LETTER':
+                message = user.get_message()
+                user.set_message(message + data)
+            elif c_type == 'REMOVE_LETTER':
+                message = user.get_message()
+                user.set_message(message[:-1])
+            elif c_type == 'CLEAR_WORD':
+                user.set_message('')
+            elif c_type == 'ADD_ATTACK':
+                user.add_word(WordType.ATTACK, data)
+            elif c_type == 'ADD_DEFEND':
+                user.add_word(WordType.DEFEND, data)
+            elif c_type == 'REMOVE_ATTACK':
+                user.remove_word(WordType.ATTACK, data)
+            elif c_type == 'REMOVE_DEFEND':
+                user.remove_word(WordType.DEFEND, data)
 
     def add_word(self, w_type, word):
         if w_type == WordType.RIVAL:
@@ -100,6 +128,9 @@ class UserFrame(tk.LabelFrame):
 
     def set_message(self, message):
         self.input_message['text'] = message
+
+    def get_message(self):
+        return self.input_message['text']
 
     def remove_word(self, w_type, word):
         if w_type == WordType.ATTACK:
