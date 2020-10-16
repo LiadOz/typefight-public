@@ -20,8 +20,15 @@ class MatchCreator:
 
     def logged_in(self, data):
         player_id = data['id']
-        self.current_match.add_player(player_id)
+        self.get_match().add_player(player_id)
         self.pending_players.remove(player_id)
+
+    def get_match(self):
+        status = self.current_match.get_status()
+        if status == MatchStatus.STARTED:
+            self.current_match = match_factory(MatchType.SOLO_DUEL)(
+                self.object_factory.create_user)
+        return self.current_match
 
 
 class MatchType(Enum):
@@ -29,6 +36,11 @@ class MatchType(Enum):
     SOLO_DUEL = 2
     DUEL = 2
     ROYALE = 100
+
+
+class MatchStatus(Enum):
+    OPEN = 1
+    STARTED = 2
 
 
 def match_factory(match_type):
@@ -43,6 +55,10 @@ class Match:
         self.capacity = capacity
         self.player_creator = player_creator
         self.active_players = {}
+        self.status = MatchStatus.OPEN
+
+    def get_status(self):
+        return self.status
 
     def add_player(self, player_id):
         if len(self.active_players) >= self.capacity:
@@ -63,6 +79,7 @@ class Match:
 
     # first stage of starting a game
     def init_match(self):
+        self.status = MatchStatus.STARTED
         for player in self.active_players.values():
             player.init_player(self.executor)
         self.executor.init_game()
