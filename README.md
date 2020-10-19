@@ -1,7 +1,6 @@
 * Typefight
 ![gif](https://j.gifs.com/2x5DW1.gif)
 
-[![Demo Doccou alpha](http://share.gifyoutube.com/KzB6Gb.gif)](https://www.youtube.com/watch?v=ek1j272iAmc)
 A speed typing multiplayer game where two players are dueling by attacking their
 opponent and defending agaist rival attacks.
 * How to run
