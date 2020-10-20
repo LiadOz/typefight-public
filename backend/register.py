@@ -1,7 +1,7 @@
 from backend.registers.register import register_factory
 from backend.game.player_factory import player_factory
 from backend.registers.registors import player_reg_factory, MatchPlayerReg
-from backend.match import MatchPlayer, BotMatchPlayer
+from backend.match import HumanMatchPlayer, BotMatchPlayer
 
 
 class MainRegister:
@@ -24,7 +24,7 @@ class PlayerFactory:
         player_reg = player_reg_factory(player_type)
         if player_reg:
             player_reg = player_reg(player, register)
-            player = MatchPlayer(player, player_id, player_reg)
+            player = HumanMatchPlayer(player, player_id, player_reg)
             # this should all be done in one step
             # maybe the matchplayerreg handles the registration of player
             MatchPlayerReg(player, register).register_all()

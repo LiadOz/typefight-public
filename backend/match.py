@@ -50,11 +50,46 @@ def match_factory(match_type):
         return DuelMatch
 
 
+class MatchStarter:
+    START_TIME = 5
+
+    def __init__(self, human_players, bot_players, executor):
+        self.human_players = human_players
+        self.bot_players = bot_players
+        self.executor = executor
+
+    # initialize all the players
+    def _init_match(self):
+        for player in self.human_players:
+            player.init_player(self.executor)
+        for player in self.bot_players:
+            player.init_player(self.executor)
+        self.executor.init_game()
+
+    # start the game
+    def _start_match(self):
+        from time import sleep
+        for sec in range(MatchStarter.START_TIME, 0, -1):
+            for player in self.human_players:
+                player.change_message(f'Starting in {sec}')
+            sleep(1)
+
+        for player in self.human_players:
+            player.start_playing()
+        for player in self.bot_players:
+            player.start_playing()
+
+    def start(self):
+        self._init_match()
+        self._start_match()
+
+
 class Match:
     def __init__(self, capacity, player_creator):
         self.capacity = capacity
         self.player_creator = player_creator
         self.active_players = {}
+        self.active_bots = {}
         self.status = MatchStatus.OPEN
 
     def get_status(self):
@@ -65,29 +100,22 @@ class Match:
             raise Exception('Cant add more players')
         self.active_players[player_id] = self.player_creator(
             PlayerType.SET_PLAYER, player_id)
-        if len(self.active_players) == self.capacity:
-            self.init_match()
+        if len(self.active_players) + len(self.active_bots) == self.capacity:
             self.start_match()
 
     def add_bot(self):
         # the given player id is zero, some better design is needed
-        self.active_players[0] = self.player_creator(
-            PlayerType.BOT_QUEUE_PLAYER, 0)
+        self.active_bots[0] = self.player_creator(PlayerType.BOT_QUEUE_PLAYER,
+                                                  0)
 
     def remove_player(self, match_player):
         self.active_players.pop(match_player.player_id)
 
-    # first stage of starting a game
-    def init_match(self):
-        self.status = MatchStatus.STARTED
-        for player in self.active_players.values():
-            player.init_player(self.executor)
-        self.executor.init_game()
-
-    # last stage of starting a game
     def start_match(self):
-        for player in self.active_players.values():
-            player.start_playing()
+        self.status = MatchStatus.STARTED
+        ms = MatchStarter(self.active_players.values(),
+                          self.active_bots.values(), self.executor)
+        ms.start()
 
 
 class DuelMatch(Match):
@@ -105,14 +133,29 @@ class SoloDuelMatch(Match):
 
 # this should become human player
 class MatchPlayer:
-    def __init__(self, player, player_id, player_reg):
+    def __init__(self, player, player_id):
         self.player = player
         self.player_id = player_id
-        self.player_reg = player_reg
 
     # the word generator should move out of here
     def init_player(self, executor):
         self.player.attach_executor(executor)
+
+    def start_playing(self):
+        pass
+
+
+class HumanMatchPlayer(MatchPlayer):
+    def __init__(self, player, player_id, player_reg):
+        super().__init__(player, player_id)
+        self.player_reg = player_reg
+        self.change_message('Waiting for match to start...')
+
+    def change_message(self, message):
+        self.player_message = message
+
+    def get_message(self):
+        return self.player_message
 
     def start_playing(self):
         self.player.register_fetchers()

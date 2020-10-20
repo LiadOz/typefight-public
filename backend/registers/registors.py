@@ -119,3 +119,9 @@ class MatchPlayerReg(ObjectRegistration):
     def register_notify(self):
         out = RegisterData('start', self.obj.player.formatted_data)
         self.replace_notify(self.obj.start_playing, out)
+
+        def get_message():
+            return {'PLAYER': {'CURRENT': self.obj.get_message()}}
+
+        self.replace_notify(self.obj.change_message,
+                            RegisterData('start', get_message))

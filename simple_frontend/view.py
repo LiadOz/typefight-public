@@ -56,11 +56,14 @@ class GameFrame(tk.Frame):
         elif user == 'RIVAL':
             frame = self.rival
         frame.clear_frame()
-        frame.set_message(payload['CURRENT'])
-        for word in payload['ATTACK']:
-            frame.add_word(WordType.ATTACK, word)
-        for word in payload['DEFEND']:
-            frame.add_word(WordType.DEFEND, word)
+        if 'CURRENT' in payload:
+            frame.set_message(payload['CURRENT'])
+        if 'ATTACK' in payload:
+            for word in payload['ATTACK']:
+                frame.add_word(WordType.ATTACK, word)
+        if 'DEFEND' in payload:
+            for word in payload['DEFEND']:
+                frame.add_word(WordType.DEFEND, word)
 
     def render_changes(self, player, changes):
         user = None
