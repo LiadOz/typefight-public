@@ -1,6 +1,8 @@
 from common.utility import WordType, Word
 from backend.game.changes import PlayerChanges
-from queue import Queue
+from backend.game.words import (WordQueue, WordsFormatter, WordSet,
+                                WordsFormatterQueue)
+from backend.game.grid import Grid
 from enum import Enum
 
 
@@ -51,8 +53,8 @@ class PlayerData:
         self.changes = PlayerChanges()
 
     def add_word(self, w_type, word):
-        self.get_container(w_type).add(word)
-        self.changes.add_word(w_type, word)
+        details = self.get_container(w_type).add(word)
+        self.changes.add_word(w_type, details)
         return True
 
     def remove_word(self, w_type, word):
@@ -143,18 +145,30 @@ class PlayerDataSet(PlayerData):
         return self.formatter.format()
 
 
-class WordsContainer:
+class PlayerDataGrid(PlayerData):
     def __init__(self):
-        self.container = None
+        super().__init__(WordSet, Grid, WordsFormatter)
+        self.mode = WordType.DEFEND
 
-    def add(self, word):
-        pass
+    def publish_word(self):
+        current = self.current_word.get_text()
+        mode, ret = None, ''
+        if current in self.get_container(WordType.ATTACK).get_data():
+            mode = WordType.ATTACK
+            ret = current
+        elif current in self.get_container(WordType.DEFEND).get_words():
+            mode = WordType.DEFEND
+        if mode:
+            self.remove_word(mode, current)
+            self.current_word.reset_word()
+            self.changes.clear_word()
+        return mode, ret
 
-    def remove(self, word):
-        pass
 
-    def get_data(self):
-        pass
+class PlayerDataType(Enum):
+    QUEUE = 'queue'
+    SET = 'set'
+    GRID = 'grid'
 
 
 def create_player_data(data_type):
@@ -162,62 +176,5 @@ def create_player_data(data_type):
         return PlayerDataQueue()
     if data_type is PlayerDataType.SET:
         return PlayerDataSet()
-
-
-class PlayerDataType(Enum):
-    QUEUE = 'queue'
-    SET = 'set'
-
-
-class WordQueue(WordsContainer):
-    def __init__(self):
-        self.container = Queue()
-
-    def add(self, word):
-        self.container.put(word)
-
-    def remove(self, word):
-        # ignores the word and pops
-        self.container.get()
-
-    def get_data(self):
-        return list(self.container.queue)
-
-
-class WordSet(WordsContainer):
-    def __init__(self):
-        self.container = set()
-
-    def add(self, word):
-        self.container.add(word)
-
-    def remove(self, word):
-        self.container.remove(word)
-
-    def get_data(self):
-        return list(self.container)
-
-
-class WordsFormatter:
-    CURRENT_WORD = 'CURRENT'
-
-    def __init__(self, player):
-        self.player = player
-
-    def format(self):
-        payload = {}
-        payload[WordType.ATTACK] = self.player.get_container(
-            WordType.ATTACK).get_data()
-        payload[WordType.DEFEND] = self.player.get_container(
-            WordType.DEFEND).get_data()
-        payload[self.CURRENT_WORD] = self.player.current_word.get_text()
-        return payload
-
-
-class WordsFormatterQueue(WordsFormatter):
-    MODE = 'MODE'
-
-    def format(self):
-        payload = super().format()
-        payload[WordsFormatterQueue.MODE] = self.player.mode
-        return payload
+    if data_type is PlayerDataType.GRID:
+        return PlayerDataGrid()

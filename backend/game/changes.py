@@ -19,6 +19,8 @@ class PlayerChanges:
         self.fetchers = []
 
     def _add_change(self, c_type, data):
+        if not data:
+            return
         for fetcher in self.fetchers:
             fetcher.add_change((c_type, data))
         # self.changes.append((c_type, data))
@@ -27,15 +29,15 @@ class PlayerChanges:
         self._add_change(ChangeType.ADD_LETTER, letter)
 
     def remove_letter(self):
-        self._add_change(ChangeType.REMOVE_LETTER, '')
+        self._add_change(ChangeType.REMOVE_LETTER, 'remove')
 
-    def add_word(self, w_type, word):
+    def add_word(self, w_type, data):
         c_type = None
         if w_type is WordType.ATTACK:
             c_type = ChangeType.ADD_ATTACK
         if w_type is WordType.DEFEND:
             c_type = ChangeType.ADD_DEFEND
-        self._add_change(c_type, word)
+        self._add_change(c_type, data)
 
     def remove_word(self, w_type, word):
         c_type = None
@@ -46,7 +48,7 @@ class PlayerChanges:
         self._add_change(c_type, word)
 
     def clear_word(self):
-        self._add_change(ChangeType.CLEAR_WORD, '')
+        self._add_change(ChangeType.CLEAR_WORD, 'clear')
 
     def add_fecther(self, fetcher):
         self.fetchers.append(fetcher)

@@ -7,7 +7,7 @@ from time import sleep
 class BotPlayer(Player):
     def __init__(self, u_id):
         super().__init__(u_id, PlayerDataType.QUEUE)
-        self.set_speed(50)
+        self.set_speed(40)
 
     def set_speed(self, wpm):
         self.seconds = 60 / (wpm * 5)
@@ -29,8 +29,8 @@ class BotPlayer(Player):
 
     def type_word(self, word):
         for c in word:
-            self.pause()
             self.type_key(c)
+            self.pause()
 
     def _run(self):
         word = self.get_next_word()

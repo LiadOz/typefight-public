@@ -82,3 +82,8 @@ class QueuePlayer(HumanPlayer):
 class SetPlayer(HumanPlayer):
     def __init__(self, u_id):
         super().__init__(u_id, PlayerDataType.SET)
+
+
+class GridPlayer(HumanPlayer):
+    def __init__(self, u_id):
+        super().__init__(u_id, PlayerDataType.GRID)

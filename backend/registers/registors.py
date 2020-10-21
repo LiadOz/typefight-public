@@ -9,6 +9,8 @@ def player_reg_factory(player_type):
         return PlayerQueueReg
     elif player_type == PlayerType.SET_PLAYER:
         return PlayerReg
+    elif player_type == PlayerType.GRID_PLAYER:
+        return PlayerReg
     return ObjectRegistration
 
 

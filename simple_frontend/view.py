@@ -56,6 +56,7 @@ class GameFrame(tk.Frame):
         elif user == 'RIVAL':
             frame = self.rival
         frame.clear_frame()
+        print('payload', payload)
         if 'CURRENT' in payload:
             frame.set_message(payload['CURRENT'])
         if 'ATTACK' in payload:
@@ -67,6 +68,7 @@ class GameFrame(tk.Frame):
 
     def render_changes(self, player, changes):
         user = None
+        print('changes', changes)
         if player == 'PLAYER':
             user = self.player
         elif player == 'RIVAL':
@@ -110,7 +112,7 @@ class GameFrame(tk.Frame):
         right_pane = tk.Frame(self, width=500, height=800)
         left_pane.grid(row=0, column=0)
         right_pane.grid(row=0, column=1)
-        self.player = UserFrame(left_pane, text='Player')
+        self.player = UserGridFrame(left_pane, text='Player')
         self.rival = UserFrame(right_pane, text='Rival')
 
     def _set_defaults(self):
@@ -169,3 +171,48 @@ class UserFrame(tk.LabelFrame):
         self.place(relx=.5, rely=.5, anchor="center")
         self.pack_propagate(False)
         self.grid_propagate(False)
+
+
+class UserGridFrame(UserFrame):
+    def __init__(self, master, *args, **kwargs):
+        super().__init__(master, *args, **kwargs)
+        self.defend_frame = GridDefendFrame(self)
+        self.attack_frame = tk.LabelFrame(self, text='ATTACK')
+        self.defend_frame.pack()
+        self.attack_frame.pack()
+
+    def remove_word(self, w_type, word):
+        if w_type == WordType.ATTACK:
+            self.attack[word].pack_forget()
+            self.attack.pop(word)
+        else:
+            self.defend_frame.remove_word(word)
+
+    def add_word(self, w_type, word):
+        if w_type == WordType.ATTACK:
+            label = tk.Label(self.attack_frame, text=word)
+            label.pack(side='left')
+            self.attack[word] = label
+        else:
+            self.defend_frame.add_words(word)
+
+
+class GridDefendFrame(tk.LabelFrame):
+    def __init__(self, master, *args, **kwargs):
+        super().__init__(master, text='DEFEND', *args, **kwargs)
+        self.words = {}
+        self.lines = []
+
+    def add_words(self, words):
+        line = []
+        row = 999 - len(self.lines)
+        for n, word in enumerate(words):
+            line.append(word)
+            label = tk.Label(self, text=word, height=2, width=10)
+            label.grid(row=row, column=n)
+            self.words[word] = label
+        self.lines.append(line)
+
+    def remove_word(self, word):
+        label = self.words.pop(word)
+        label.grid_forget()

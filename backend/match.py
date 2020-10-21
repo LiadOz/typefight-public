@@ -51,7 +51,7 @@ def match_factory(match_type):
 
 
 class MatchStarter:
-    START_TIME = 5
+    START_TIME = 2
 
     def __init__(self, human_players, bot_players, executor):
         self.human_players = human_players
@@ -99,7 +99,7 @@ class Match:
         if len(self.active_players) >= self.capacity:
             raise Exception('Cant add more players')
         self.active_players[player_id] = self.player_creator(
-            PlayerType.SET_PLAYER, player_id)
+            PlayerType.GRID_PLAYER, player_id)
         if len(self.active_players) + len(self.active_bots) == self.capacity:
             self.start_match()
 
