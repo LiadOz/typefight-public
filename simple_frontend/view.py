@@ -56,7 +56,6 @@ class GameFrame(tk.Frame):
         elif user == 'RIVAL':
             frame = self.rival
         frame.clear_frame()
-        print('payload', payload)
         if 'CURRENT' in payload:
             frame.set_message(payload['CURRENT'])
         if 'ATTACK' in payload:
@@ -68,7 +67,6 @@ class GameFrame(tk.Frame):
 
     def render_changes(self, player, changes):
         user = None
-        print('changes', changes)
         if player == 'PLAYER':
             user = self.player
         elif player == 'RIVAL':
@@ -201,18 +199,19 @@ class GridDefendFrame(tk.LabelFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, text='DEFEND', *args, **kwargs)
         self.words = {}
-        self.lines = []
 
-    def add_words(self, words):
-        line = []
-        row = 999 - len(self.lines)
-        for n, word in enumerate(words):
-            line.append(word)
-            label = tk.Label(self, text=word, height=2, width=10)
-            label.grid(row=row, column=n)
-            self.words[word] = label
-        self.lines.append(line)
+    def add_words(self, word):
+        word = word.replace('#', ' ')
+        label = tk.Label(self, text=word, font=('Courier', 13))
+        label.pack()
+        for w in word.split(' '):
+            if not w:
+                continue
+            self.words[w] = label
 
     def remove_word(self, word):
         label = self.words.pop(word)
-        label.grid_forget()
+        text = label['text'].split(word)
+        label['text'] = text[0] + ' ' * len(word) + text[1]
+        if label['text'] == '                         ':
+            label.pack_forget()

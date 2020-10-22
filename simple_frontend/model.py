@@ -10,7 +10,7 @@ class Model:
         self.render_change = render_change
         # self.user = json.loads(
         #     requests.get(f"{endpoint}/register").text)['id']
-        self.socket = Client(logger=True)
+        self.socket = Client(logger=False)
         self.socket.on('login', self.register_self)
         self.socket.connect(endpoint)
         self.socket.emit('login')
