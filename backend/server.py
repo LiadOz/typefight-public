@@ -9,7 +9,7 @@ import logging
 app = Flask(__name__)
 logging.getLogger('werkzeug').disabled = True
 app.config.from_object('backend.config.Config')
-sio = SocketIO(app, logger=True)
+sio = SocketIO(app, logger=False)
 mr = MainRegister(RegisterType.SOCKET, sio, '')
 
 tempregister = SocketRegister(sio, '')

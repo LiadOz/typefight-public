@@ -137,7 +137,6 @@ class MatchPlayer:
         self.player = player
         self.player_id = player_id
 
-    # the word generator should move out of here
     def init_player(self, executor):
         self.player.attach_executor(executor)
 

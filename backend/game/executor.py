@@ -99,6 +99,7 @@ class DuelExecutor(Executor):
                           self.word_gen.get_word())
             self.add_word(self.player_2, WordType.ATTACK,
                           self.word_gen.get_word())
+        for _ in range(30):
             self.add_word(self.player_1, WordType.DEFEND,
                           self.word_gen.get_word())
             self.add_word(self.player_2, WordType.DEFEND,

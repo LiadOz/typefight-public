@@ -2,7 +2,7 @@ from common.utility import WordType, Word
 from backend.game.changes import PlayerChanges
 from backend.game.words import (WordQueue, WordsFormatter, WordSet,
                                 WordsFormatterQueue)
-from backend.game.grid import Grid
+from backend.game.grid import GridContainer
 from enum import Enum
 
 
@@ -147,7 +147,7 @@ class PlayerDataSet(PlayerData):
 
 class PlayerDataGrid(PlayerData):
     def __init__(self):
-        super().__init__(WordSet, Grid, WordsFormatter)
+        super().__init__(WordSet, GridContainer, WordsFormatter)
         self.mode = WordType.DEFEND
 
     def publish_word(self):
@@ -156,7 +156,7 @@ class PlayerDataGrid(PlayerData):
         if current in self.get_container(WordType.ATTACK).get_data():
             mode = WordType.ATTACK
             ret = current
-        elif current in self.get_container(WordType.DEFEND).get_words():
+        elif current in self.get_container(WordType.DEFEND).accessible_words():
             mode = WordType.DEFEND
         if mode:
             self.remove_word(mode, current)

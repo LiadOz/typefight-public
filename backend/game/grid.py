@@ -1,50 +1,127 @@
 from backend.game.words import WordsContainer
 
 
-class Grid(WordsContainer):
+class GridContainer(WordsContainer):
     def __init__(self):
-        self.word_to_line = {}
-        self.lines = []
+        self.grid = Grid()
 
     def add(self, word):
+        return self.grid.add_word(word)
+
+    def remove(self, word):
+        self.grid.remove_word(word)
+
+    def get_words(self):
+        # returns grid words
+        return self.grid.get_words()
+
+    def accessible_words(self):
+        return self.grid.accessible_words()
+
+    def get_data(self):
+        # returns grid layout
+        return self.grid.get_data()
+
+
+class Grid:
+    LINE_WIDTH = 40
+
+    def __init__(self):
+        self.word_to_line = {}
+        self.cells = []
+        self.lines = []
+        self.available_lines = 0
+
+    def add_word(self, word):
+        # adds a word to the grid
         top_line = self._top_line()
 
         ret = top_line.try_add_word(word)
         if not ret:
-            self.lines.append(Line())
-            self.add(word)
+            self.create_line()
+            self.add_word(word)
         else:
             self.word_to_line[word] = top_line
 
         if not top_line.can_add():
+            self.available_lines += 1
+            self._update_accessible()
             return top_line.get_line()
         return ''
 
-    def remove(self, word):
-        # game logic for what's allowed to remove should be in here
+    def remove_word(self, word):
         line = self.word_to_line[word]
         line.remove_word(word)
-        # if line.empty():
-        #     self.lines.remove(line)
+        self._update_accessible()
+
+    def create_line(self):
+        line = [Cell() for _ in range(Grid.LINE_WIDTH)]
+        self.cells.append(line)
+        self.lines.append(Line(line))
 
     def _top_line(self):
         if not self.lines:
-            self.lines.append(Line())
+            self.create_line()
+            self._init_accessible()
         return self.lines[-1]
+
+    def _init_accessible(self):
+        for cell in self.cells[0]:
+            cell.set_visibility(True)
+
+    def _update_accessible(self):
+        if not self.lines:
+            return
+
+        # go through all unblocked cells and makes the next blocked visible
+        for col in range(Grid.LINE_WIDTH):
+            for row in range(self.available_lines):
+                if self.cells[row][col].blocked:
+                    self.cells[row][col].set_visibility(True)
+                    break
+
+    def _print_accessible(self):
+        for line in self.cells:
+            li1 = []
+            li2 = []
+            li3 = []
+            for cell in line:
+                if cell.char:
+                    li1.append(cell.char)
+                else:
+                    li1.append(' ')
+                if cell.visible:
+                    li2.append('V')
+                else:
+                    li2.append('X')
+                if cell.blocked:
+                    li3.append('B')
+                else:
+                    li3.append('U')
+            print(''.join(li1))
+            print(''.join(li2))
+            print(''.join(li3))
+        print()
 
     def get_words(self):
         return list(self.word_to_line)
+
+    def accessible_words(self):
+        acc = set()
+        for line in self.lines:
+            if line.can_add():
+                break
+            acc.update(line.get_visible_words())
+        return acc
 
     def get_data(self):
         return [line.get_line() for line in self.lines if not line.can_add()]
 
 
 class Line:
-    SIZE = 25
-
-    def __init__(self):
+    def __init__(self, cells):
         self.closed = False
-        self.cells = CellArray(self.SIZE)
+        self.cells = CellArray(cells)
         self.inserter = WordInserterSimple(self.cells)
         self.words = []
 
@@ -74,6 +151,9 @@ class Line:
     def get_line(self):
         return self.cells.line_rep()
 
+    def get_visible_words(self):
+        return self.cells.visible_words()
+
 
 # determines how to insert words in cells
 class WordInserter:
@@ -83,9 +163,6 @@ class WordInserter:
         self.cells = cells
         self.words = []
         self.occupied = 0
-
-    def insert_words(self):
-        pass
 
     # returns False if word is not able to be added
     def add_word(self, word):
@@ -114,14 +191,14 @@ class WordInserterSimple(WordInserter):
             if first:
                 first = False
                 for _ in range(extra_spaces):
-                    self.cells.add_char(self.SEP)
+                    self.cells.add_char(self.SEP, block=False)
             if i < len(self.words) - 1:  # don't put SEP after last word
-                self.cells.add_char(self.SEP)
+                self.cells.add_char(self.SEP, block=False)
 
 
 class CellArray:
-    def __init__(self, size):
-        self.cells = [Cell() for _ in range(size)]
+    def __init__(self, cells):
+        self.cells = cells
         self.word_to_cells = {}
         self.it = 0
 
@@ -144,20 +221,44 @@ class CellArray:
     def remove_word(self, word):
         for loc in self.word_to_cells[word]:
             self.cells[loc].remove_char()
+            self.cells[loc].unblock()
 
-    def add_char(self, char):
+    def add_char(self, char, block=True):
         self.cells[self.it].set_char(char)
+        if not block:
+            self.cells[self.it].unblock()
         index = self.it
         self.it += 1
         return index
+
+    def visible_words(self):
+        # find all the words that are visible
+        visible = []
+        for word, locations in self.word_to_cells.items():
+            all_vis = True
+            for loc in locations:
+                if not self.cells[loc].visible:
+                    all_vis = False
+                    break
+            if all_vis:
+                visible.append(word)
+        return visible
 
 
 class Cell:
     def __init__(self):
         self.char = ''
+        self.visible = False
+        self.blocked = True
 
     def set_char(self, char):
         self.char = char
+
+    def set_visibility(self, vis):
+        self.visible = vis
+
+    def unblock(self):
+        self.blocked = False
 
     def get_char(self):
         return self.char
