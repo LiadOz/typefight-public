@@ -105,8 +105,8 @@ class Match:
 
     def add_bot(self):
         # the given player id is zero, some better design is needed
-        self.active_bots[0] = self.player_creator(PlayerType.BOT_QUEUE_PLAYER,
-                                                  0)
+        self.active_bots[0] = \
+            self.player_creator(PlayerType.BOT_GRID_PLAYER, 0)
 
     def remove_player(self, match_player):
         self.active_players.pop(match_player.player_id)

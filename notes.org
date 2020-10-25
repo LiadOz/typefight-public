@@ -14,3 +14,4 @@ the data of a request will tell what function should be called
 * find where to put the word generator
 * create tests for regiters
 * rework registers to only subclass
+* have a class that allows the player to view it's data

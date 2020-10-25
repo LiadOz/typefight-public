@@ -40,6 +40,9 @@ class Executor:
     def publish_word(self, caller_id):
         pass
 
+    def get_publishable(self, caller_id):
+        return self.data.get_publishable(caller_id)
+
     def toggle_mode(self, caller_id):
         self.data.toggle_mode(caller_id)
 

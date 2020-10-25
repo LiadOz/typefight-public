@@ -222,6 +222,7 @@ class CellArray:
         for loc in self.word_to_cells[word]:
             self.cells[loc].remove_char()
             self.cells[loc].unblock()
+        self.word_to_cells.pop(word)
 
     def add_char(self, char, block=True):
         self.cells[self.it].set_char(char)

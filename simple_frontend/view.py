@@ -111,7 +111,7 @@ class GameFrame(tk.Frame):
         left_pane.grid(row=0, column=0)
         right_pane.grid(row=0, column=1)
         self.player = UserGridFrame(left_pane, text='Player')
-        self.rival = UserFrame(right_pane, text='Rival')
+        self.rival = UserGridFrame(right_pane, text='Rival')
 
     def _set_defaults(self):
         self['width'] = 1000
@@ -213,5 +213,5 @@ class GridDefendFrame(tk.LabelFrame):
         label = self.words.pop(word)
         text = label['text'].split(word)
         label['text'] = text[0] + ' ' * len(word) + text[1]
-        if label['text'] == '                         ':
+        if label['text'].strip() == '':
             label.pack_forget()

@@ -3,7 +3,8 @@ from backend.game.player_factory import PlayerType
 
 
 def player_reg_factory(player_type):
-    if player_type == PlayerType.BOT_QUEUE_PLAYER:
+    if player_type == PlayerType.BOT_QUEUE_PLAYER or \
+       player_type == PlayerType.BOT_GRID_PLAYER:
         return None
     elif player_type == PlayerType.QUEUE_PLAYER:
         return PlayerQueueReg
@@ -11,7 +12,7 @@ def player_reg_factory(player_type):
         return PlayerReg
     elif player_type == PlayerType.GRID_PLAYER:
         return PlayerReg
-    return ObjectRegistration
+    raise Exception('Unknown Player Type Register')
 
 
 class ObjectRegistration:

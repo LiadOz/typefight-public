@@ -28,6 +28,9 @@ class GameData:
     def publish_word(self, caller_id):
         return self.mapping[caller_id].publish_word()
 
+    def get_publishable(self, caller_id):
+        return self.mapping[caller_id].get_publishable()
+
     def toggle_mode(self, caller_id):
         self.mapping[caller_id].toggle_mode()
 
@@ -73,6 +76,9 @@ class PlayerData:
     def publish_word(self):
         pass
 
+    def get_publishable(self):
+        pass
+
     def fetch_changes(self, fetcher):
         self.changes.fetch_changes(fetcher)
 
@@ -99,8 +105,9 @@ class PlayerDataQueue(PlayerData):
         """
         tries to publish a word if it was in attack mode it returns the word
         """
+        word = self.get_publishable()[self.mode]
         li = self.get_container(self.mode).get_data()
-        if li and li[0] == self.current_word.get_text():
+        if word and word == self.current_word.get_text():
             word = li[0]
             self.remove_word(self.mode, word)
             self.current_word.reset_word()
@@ -114,6 +121,16 @@ class PlayerDataQueue(PlayerData):
             self.mode = WordType.DEFEND
         else:
             self.mode = WordType.ATTACK
+
+    def get_publishable(self):
+        payload = {}
+        for w_type in WordType:
+            container = self.get_container(w_type).get_data()
+            data = ''
+            if container:
+                data = container[0]
+            payload[w_type] = data
+        return payload
 
     def get_mode(self):
         return self.mode
@@ -141,6 +158,12 @@ class PlayerDataSet(PlayerData):
             self.changes.clear_word()
         return mode, ret
 
+    def get_publishable(self):
+        payload = {}
+        for w_type in WordType:
+            payload[w_type] = self.get_container(w_type).get_data()
+        return payload
+
     def format(self):
         return self.formatter.format()
 
@@ -153,16 +176,25 @@ class PlayerDataGrid(PlayerData):
     def publish_word(self):
         current = self.current_word.get_text()
         mode, ret = None, ''
-        if current in self.get_container(WordType.ATTACK).get_data():
+        candidates = self.get_publishable()
+        if current in candidates[WordType.ATTACK]:
             mode = WordType.ATTACK
             ret = current
-        elif current in self.get_container(WordType.DEFEND).accessible_words():
+        elif current in candidates[WordType.DEFEND]:
             mode = WordType.DEFEND
         if mode:
             self.remove_word(mode, current)
             self.current_word.reset_word()
             self.changes.clear_word()
         return mode, ret
+
+    def get_publishable(self):
+        payload = {}
+        payload[WordType.ATTACK] = \
+            self.get_container(WordType.ATTACK).get_data()
+        payload[WordType.DEFEND] = \
+            self.get_container(WordType.DEFEND).accessible_words()
+        return payload
 
 
 class PlayerDataType(Enum):

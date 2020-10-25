@@ -44,6 +44,9 @@ class Player(IPlayer):
     def get_mode(self):
         return self.executor.get_mode(self.u_id)
 
+    def get_publishable(self):
+        return self.executor.get_publishable(self.u_id)
+
     def formatted_data(self):
         payload = self.get_data()
         new_payload = {}
