@@ -1,17 +1,25 @@
-* fix user caller into a good pardigm
+* DONE fix user caller into a good pardigm
 it needs to have if and elif without else
-* add pending changes feature
-* deployment
-[[https://flask.palletsprojects.com/en/1.1.x/deploying/#deployment][link]]
-* figure out how to correctly emit changes in UsersManager
+* DONE add pending changes feature
+* DONE figure out how to correctly emit changes in UsersManager
   the backend will own a broadcaster which is given to it by the server
-* change the current model presenter pardigm
+* DONE change the current model presenter pardigm
 The model should actually be the backend
-* make socket communication with user only outgoing and ingoing
+* DONE make socket communication with user only outgoing and ingoing
 the data of a request will tell what function should be called
-* change from namespaces into rooms
+* TODO change from namespaces into rooms
 [[https://stackoverflow.com/questions/48036955/socket-io-switching-namespaces][link]]
-* find where to put the word generator
-* create tests for regiters
-* rework registers to only subclass
-* have a class that allows the player to view it's data
+* TODO find where to put the word generator
+* TODO in order to login instead of going thru /data{num} you need to use only /
+* TODO create tests for regiters
+* TODO rework registers to only subclass
+* TODO have a class that allows the player to view it's data
+* TODO Use glow and bloom filters
+https://pixijs.io/pixi-filters/docs/PIXI.filters.html
+* TODO Fix Typescript relative imports
+
+* Create Production
+** TODO use CDN for Pixi.js
+http://hippocurious.com/setup-a-cdn-to-speed-up-your-website
+** TODO flask
+[[https://flask.palletsprojects.com/en/1.1.x/deploying/#deployment][link]]
