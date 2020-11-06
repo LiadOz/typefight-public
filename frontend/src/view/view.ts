@@ -1,27 +1,30 @@
-export interface IView {
-    initView(): void;
-    sendPayload(): void;
-}
+import {PIXIDuelView} from './duel-view'
+import {PIXIMenu} from './menu-view'
+import {IPresenter, IView, IViewManager, IDuelView, IMenu,
+        ViewAction} from '../mvp'
 
 export class ViewFactory {
-    public create(view_type: string, container: HTMLElement): IView {
+    public create(view_type: string, presenter: IPresenter,
+                  container: HTMLElement): IViewManager {
         if (view_type == 'PIXI') {
-            return new PixiView(container as HTMLCanvasElement);
+            return new PixiView(presenter, container as HTMLCanvasElement);
         }
         throw new TypeError(`No view type ${view_type}`)
     }
 }
 
-import * as PIXI from 'pixi.js';
-class PixiView implements IView {
+class PixiView implements IViewManager {
     private renderer: PIXI.Renderer;
     private stage: PIXI.Container;
     private ticker: PIXI.Ticker;
+    private presenter: IPresenter;
 
-    constructor(container: HTMLCanvasElement) {
+    constructor(presenter: IPresenter, container: HTMLCanvasElement) {
+        this.presenter = presenter;
         const app = new PIXI.Application({
             view: container,
-            backgroundColor: 0xffffff,
+            resizeTo: window,
+            backgroundColor: 0x0000ff,
         })
         this.renderer = app.renderer;
         this.stage = app.stage;
@@ -29,7 +32,7 @@ class PixiView implements IView {
         this.ticker.start();
     }
 
-    public initView(): void {
+    private animation(): void {
         var t = new PIXI.Text('welcome', {fontFamily: 'Arial', fontSize: 40})
         t.x = this.renderer.width / 2;
         t.y = this.renderer.height / 2;
@@ -46,7 +49,29 @@ class PixiView implements IView {
         this.ticker.add(animate);
     }
 
-    public sendPayload(): void {
-        
+    public duelView(): IDuelView {
+        var x = this.renderer.width / 2;
+        var y = this.renderer.height / 2;
+        var dv = new PIXIDuelView(this, x, y);
+        this.stage.addChild(dv);
+        return dv;
+    }
+
+    public menuView(): IMenu {
+        var x = this.renderer.width / 2;
+        var y = this.renderer.height / 2;
+        var menu = new PIXIMenu(this, x, y);
+        this.stage.addChild(menu);
+        return menu;
+    }
+
+    public getPresenter(): IPresenter {
+        return this.presenter;
+    }
+
+    public accept(action: ViewAction){
+        this.presenter.accept(action);
     }
 }
+
+

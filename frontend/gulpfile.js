@@ -17,7 +17,7 @@ var browserifyInc = require('browserify-incremental')
 
 var b = browserify(browserifyInc.args, {
         entries: ["src/app.ts"]
-});
+}).ignore('pixi.js');
 b.plugin(tsify);
 b.plugin(watchify, {ignoreWatch: "**/static/**", poll: true});
 // in wsl you must use polling and then ignore complied files so that they won't
