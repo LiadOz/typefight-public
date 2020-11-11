@@ -49,6 +49,7 @@ class PlayerView extends PIXI.Container {
     private y_start: number;
     private attack: AttackView;
     private defend: DefendView;
+    private currLabel: PIXI.Text;
     
     constructor(pos_x: number, pos_y: number){
         super();
@@ -59,6 +60,13 @@ class PlayerView extends PIXI.Container {
 
         this.initBase();
 
+        this.currLabel = new PIXI.Text(
+            '', {fontFamily: 'monospace', fontSize: 50});
+        this.currLabel.x = pos_x;
+        this.currLabel.y = this.y_start + DefendView.HEIGHT + 10;
+        this.currLabel.anchor.x = 0.5;
+        this.addChild(this.currLabel);
+
         this.attack = new AttackView(
             this.x_start + PlayerView.PADDING,
             this.y_start + PlayerView.HEIGHT - AttackView.HEIGHT - PlayerView.PADDING);
@@ -67,7 +75,6 @@ class PlayerView extends PIXI.Container {
             this.x_start + PlayerView.PADDING,
             this.y_start + PlayerView.PADDING);
         this.addChild(this.defend);
-
     }
 
     private initBase(): void {
@@ -90,6 +97,14 @@ class PlayerView extends PIXI.Container {
             for (const line of lines)
                 this.defend.addLine(line);
         }
+        if ('ATTACK' in data) {
+            var words = data.ATTACK as string[];
+            for (const word of words)
+                this.attack.addWord(word);
+        }
+        if ('CURRENT' in data) {
+            this.currLabel.text = data.CURRENT;
+        }
     }
 
     public renderChanges(data: any): void  {
@@ -99,10 +114,29 @@ class PlayerView extends PIXI.Container {
     }
 
     private renderChange(c_type: string, change: string): void {
-        if (c_type == 'ADD_DEFEND')
-            this.defend.addLine(change);
-        if (c_type == 'REMOVE_DEFEND')
-            this.defend.removeWord(change);
+        switch (c_type) {
+            case 'ADD_DEFEND':
+                this.defend.addLine(change);
+                break;
+            case 'REMOVE_DEFEND':
+                this.defend.removeWord(change);
+                break;
+            case 'ADD_ATTACK':
+                this.attack.addWord(change);
+                break;
+            case 'REMOVE_ATTACK':
+                this.attack.removeWord(change);
+                break;
+            case 'ADD_LETTER':
+                this.currLabel.text += change;
+                break;
+            case 'REMOVE_LETTER':
+                this.currLabel.text = this.currLabel.text.slice(0, -1);
+                break;
+            case 'CLEAR_WORD':
+                this.currLabel.text = '';
+                break;
+        }
     }
 
 }
@@ -110,6 +144,7 @@ class PlayerView extends PIXI.Container {
 class AttackView extends PIXI.Container {
     public static readonly WIDTH = 540;
     public static readonly HEIGHT = 130;
+    private attackGrid: AttackGrid;
     private x_start: number;
     private y_start: number;
     
@@ -129,13 +164,67 @@ class AttackView extends PIXI.Container {
         attack.x = this.x_start;
         attack.y = this.y_start;
 
+        this.attackGrid = new AttackGrid(
+            5, 2, AttackView.WIDTH, AttackView.HEIGHT);
+        this.attackGrid.x = x_start;
+        this.attackGrid.y = y_start;
+        this.addChild(this.attackGrid);
+    }
+
+    public addWord(word: string) {
+        this.attackGrid.addWord(word);
+    }
+
+    public removeWord(word: string) {
+        this.attackGrid.removeWord(word);
     }
         
 }
 
+class AttackGrid extends PIXI.Container {
+    private words: Map<string, [number, PIXI.Container]>;
+    private wordsPerLine: number;
+    private lines: number;
+    private freeCells: number[];
+    private wordWidth: number;
+    private wordHeight: number;
+
+    constructor(wordsPerLine: number, lines: number,
+                parentWidth: number, parentHeight: number) {
+        super();
+        this.wordsPerLine = wordsPerLine;
+        this.lines = lines;
+        this.words = new Map<string, [number, PIXI.Container]>();
+        this.wordWidth = parentWidth / wordsPerLine;
+        this.wordHeight = parentHeight / lines;
+
+        this.freeCells = [];
+        for (var i = 0; i < wordsPerLine * lines; i++)
+            this.freeCells.push(i);
+    }
+
+    public addWord(word: string) {
+        const cell = this.freeCells.pop()!;
+        const x = cell % this.wordsPerLine;
+        const y = Math.floor(cell / this.wordsPerLine);
+        const wordSprite = new PIXI.Text(
+            word, {fontFamily: 'monospace', fontSize: 15});
+        wordSprite.x = this.wordWidth * x;
+        wordSprite.y = this.wordHeight * y;
+        this.addChild(wordSprite);
+        this.words.set(word, [cell, wordSprite]);
+    }
+
+    public removeWord(word: string) {
+        var prev = this.words.get(word)!;
+        prev[1].destroy();
+        this.freeCells.push(prev[0]);
+    }
+}
+
 class DefendView extends PIXI.Container {
     public static readonly WIDTH = 540;
-    public static readonly HEIGHT = 660;
+    public static readonly HEIGHT = 600; // original is 660
     private grid: WordGrid;
     private x_start: number;
     private y_start: number;
@@ -180,7 +269,7 @@ class WordGrid extends PIXI.Container {
     private cellHeight: number;
     private words: Map<string, PIXI.Container[]>;
     private wordsContainer: PIXI.Container;
-    
+
     constructor(x_start: number, y_start: number,
                 parentWidth: number, parentHeight: number) {
         super();

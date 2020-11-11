@@ -9,7 +9,7 @@ from random import uniform, choice
 class BotPlayer(Player):
     def __init__(self, u_id, data_type):
         super().__init__(u_id, data_type)
-        self.set_speed(80)
+        self.set_speed(50)
 
     def set_speed(self, wpm):
         self.seconds = 60 / (wpm * 5)
