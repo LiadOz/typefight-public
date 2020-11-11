@@ -1,5 +1,9 @@
 export interface IModel {
-    
+    getPresenter(): IPresenter
+    startSoloGame(): void;
+    sendLetter(letter: string): void;
+    removeLetter(): void;
+    publishWord(): void;
 }
 
 export interface IViewManager {
@@ -12,6 +16,7 @@ export interface IViewManager {
 export interface IPresenter {
     run() : void;
     accept(action: ViewAction): void;
+    acceptData(action: ModelAction, data: string): void;
 }
 
 export interface IView {
@@ -20,8 +25,8 @@ export interface IView {
 }
 
 export interface IDuelView extends IView {
-    addWord(): void;
-    removeWord(): void;
+    renderGame(data: any): void;
+    renderChanges(data: any): void;
 }
 
 export interface IMenu extends IView {
@@ -30,4 +35,9 @@ export interface IMenu extends IView {
 
 export enum ViewAction {
     START_SOLO,
+}
+
+export enum ModelAction {
+    RENDER_ALL,
+    RENDER_CHANGE,
 }

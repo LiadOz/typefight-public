@@ -24,7 +24,7 @@ class PixiView implements IViewManager {
         const app = new PIXI.Application({
             view: container,
             resizeTo: window,
-            backgroundColor: 0x0000ff,
+            backgroundColor: 0x272D37,
         })
         this.renderer = app.renderer;
         this.stage = app.stage;

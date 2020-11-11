@@ -1,19 +1,20 @@
-import {IModel, IViewManager, IPresenter, ViewAction, IView} from '../mvp'
+import {IModel, IViewManager, IPresenter,
+    ViewAction, IView, ModelAction, IDuelView} from '../mvp'
 import {ViewFactory} from '../view/view'
-import {Model} from '../model/model'
+import {ModelFactory} from '../model/model'
+
 export class Presenter implements IPresenter {
 
     private model: IModel;
     private view: IViewManager;
     private currView: IView;
     constructor(container: HTMLElement){
-        this.model = new Model;
+        this.model = new ModelFactory().create('LOCAL', this);
         this.view = new ViewFactory().create('PIXI', this, container);
         this.currView = this.view.menuView();
     }
 
     public run(): void {
-        this.registerKeyboard();
         // this.view.createMenu();
     }
 
@@ -21,14 +22,32 @@ export class Presenter implements IPresenter {
         if (action == ViewAction.START_SOLO){
             this.currView.remove();
             this.currView = this.view.duelView();
+            this.model.startSoloGame();
+            this.registerKeyboard();
         }
+    }
+
+    public acceptData(action: ModelAction, data: string) {
+        const payload = JSON.parse(data);
+        var dv = this.currView as IDuelView;
+        if (action == ModelAction.RENDER_ALL)
+            dv.renderGame(payload);
+        else if (action == ModelAction.RENDER_CHANGE)
+            dv.renderChanges(payload);
     }
 
     private registerKeyboard(): void{
         document.addEventListener('keydown', (event: KeyboardEvent) => {
             if (event.key.length == 1 && event.key.match("[a-z]")){
-                console.log(event.key);
+                var pushed = event.key;
+                this.model.sendLetter(pushed);
             }
+
+            else if (event.key == 'Backspace')
+                this.model.removeLetter();
+
+            else if (event.key == ' ')
+                this.model.publishWord();
         });
     }
 }

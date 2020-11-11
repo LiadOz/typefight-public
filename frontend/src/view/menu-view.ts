@@ -23,7 +23,7 @@ export class PIXIMenu extends PIXI.Container implements IMenu {
         graphics.y = this.y_pos;
         
         graphics.lineStyle(0);
-        graphics.beginFill(0xffffff);
+        graphics.beginFill(0x38404E);
         graphics.drawShape(
             new PIXI.Rectangle(
                 0 - this.WIDTH/2, 0 - this.HEIGHT/2, this.WIDTH, this.HEIGHT));

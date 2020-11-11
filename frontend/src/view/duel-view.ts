@@ -3,20 +3,31 @@ import { IDuelView, IViewManager} from '../mvp'
 export class PIXIDuelView extends PIXI.Container implements IDuelView {
     private readonly DISTANCE = 30;
     private manager: IViewManager;
+    private player: PlayerView;
+    private rival: PlayerView;
     constructor(manager: IViewManager, x: number, y: number){
         super();
         this.manager = manager;
         var dist = PlayerView.WIDTH / 2 + this.DISTANCE / 2;
-        this.addChild(new PlayerView(x - dist, y));
-        this.addChild(new PlayerView(x + dist, y));
+        this.player = new PlayerView(x - dist, y);
+        this.rival = new PlayerView(x + dist, y)
+
+        this.addChild(this.player);
+        this.addChild(this.rival);
     }
 
-    public addWord(): void {
-        
+    public renderGame(data: any): void {
+        if (data.PLAYER != undefined)
+            this.player.renderPlayer(data.PLAYER);
+        if (data.RIVAL != undefined)
+            this.rival.renderPlayer(data.RIVAL);
     }
 
-    public removeWord(): void {
-        
+    public renderChanges(data: any): void {
+        if (data.PLAYER != undefined)
+            this.player.renderChanges(data.PLAYER);
+        if (data.RIVAL != undefined)
+            this.rival.renderChanges(data.RIVAL);
     }
 
     public remove(): void {
@@ -31,36 +42,221 @@ export class PIXIDuelView extends PIXI.Container implements IDuelView {
 class PlayerView extends PIXI.Container {
     public static readonly WIDTH = 550;
     public static readonly HEIGHT = 820
-    private pos_x: number;
-    private pos_y: number;
+    public static readonly PADDING = 5;
+    private pos_x: number; // x position of center
+    private pos_y: number; // y position of center
+    private x_start: number;
+    private y_start: number;
+    private attack: AttackView;
+    private defend: DefendView;
     
     constructor(pos_x: number, pos_y: number){
         super();
         this.pos_x = pos_x;
         this.pos_y = pos_y;
+        this.x_start = pos_x - PlayerView.WIDTH / 2;
+        this.y_start = pos_y - PlayerView.HEIGHT / 2;
+
         this.initBase();
+
+        this.attack = new AttackView(
+            this.x_start + PlayerView.PADDING,
+            this.y_start + PlayerView.HEIGHT - AttackView.HEIGHT - PlayerView.PADDING);
+        this.addChild(this.attack);
+        this.defend = new DefendView(
+            this.x_start + PlayerView.PADDING,
+            this.y_start + PlayerView.PADDING);
+        this.addChild(this.defend);
+
     }
 
     private initBase(): void {
         var graphics = new PIXI.Graphics();
         this.addChild(graphics);
-        graphics.x = this.pos_x;
-        graphics.y = this.pos_y;
+        graphics.x = this.x_start;
+        graphics.y = this.y_start;
         
         graphics.lineStyle(0);
-        graphics.beginFill(0xffffff);
+        graphics.beginFill(0x38404E);
         graphics.drawShape(
-            new PIXI.Rectangle(
-                0 - PlayerView.WIDTH/2, 0 - PlayerView.HEIGHT/2,
-                PlayerView.WIDTH, PlayerView.HEIGHT));
+            new PIXI.Rectangle(0, 0, PlayerView.WIDTH, PlayerView.HEIGHT));
         graphics.endFill();
 
-        var game = new PIXI.Text(
-            'the little frog jumped over the lazy cat',
-            {fontFamily: 'monospace', fontSize:21});
-        game.x = this.pos_x;
-        game.y = this.pos_y;
-        game.anchor.set(0.5);
-        this.addChild(game);
+    }
+
+    public renderPlayer(data: any): void {
+        if ('DEFEND' in data){
+            var lines = data.DEFEND as string[];
+            for (const line of lines)
+                this.defend.addLine(line);
+        }
+    }
+
+    public renderChanges(data: any): void  {
+        var changes = data as [string, string][];
+        for (const change of changes)
+            this.renderChange(change[0], change[1]);
+    }
+
+    private renderChange(c_type: string, change: string): void {
+        if (c_type == 'ADD_DEFEND')
+            this.defend.addLine(change);
+        if (c_type == 'REMOVE_DEFEND')
+            this.defend.removeWord(change);
+    }
+
+}
+
+class AttackView extends PIXI.Container {
+    public static readonly WIDTH = 540;
+    public static readonly HEIGHT = 130;
+    private x_start: number;
+    private y_start: number;
+    
+    constructor(x_start: number, y_start: number) {
+        super();
+        this.x_start = x_start;
+        this.y_start = y_start;
+
+        var attack = new PIXI.Graphics();
+        this.addChild(attack);
+        
+        attack.lineStyle(3);
+        attack.beginFill(0xffffff);
+        attack.drawShape(
+            new PIXI.Rectangle(0 , 0, AttackView.WIDTH, AttackView.HEIGHT));
+        attack.endFill();
+        attack.x = this.x_start;
+        attack.y = this.y_start;
+
+    }
+        
+}
+
+class DefendView extends PIXI.Container {
+    public static readonly WIDTH = 540;
+    public static readonly HEIGHT = 660;
+    private grid: WordGrid;
+    private x_start: number;
+    private y_start: number;
+    
+    constructor(x_start: number, y_start: number) {
+        super();
+        this.x_start = x_start;
+        this.y_start = y_start;
+
+        var defend = new PIXI.Graphics();
+        this.addChild(defend);
+        
+        defend.beginFill(0xffffff);
+        defend.drawShape(
+            new PIXI.Rectangle(0 , 0, DefendView.WIDTH, DefendView.HEIGHT));
+        defend.endFill();
+        defend.x = this.x_start;
+        defend.y = this.y_start;
+        this.grid = new WordGrid(this.x_start, this.y_start,
+                                 DefendView.WIDTH, DefendView.HEIGHT);
+        // this.grid.drawGrid();
+        this.addChild(this.grid);
+    }
+
+    public addLine(line: string): void {
+        this.grid.addLine(line);
+    }
+
+    public removeWord(word: string): void {
+        this.grid.removeWord(word);
+    }
+        
+    
+}
+
+class WordGrid extends PIXI.Container {
+    public static readonly CHARS = 40;
+    public static readonly LINES = 20;
+    private x_start: number;
+    private y_start: number;
+    private cellWidth: number;
+    private cellHeight: number;
+    private words: Map<string, PIXI.Container[]>;
+    private wordsContainer: PIXI.Container;
+    
+    constructor(x_start: number, y_start: number,
+                parentWidth: number, parentHeight: number) {
+        super();
+        this.x_start = x_start;
+        this.y_start = y_start;
+        this.cellWidth = parentWidth / WordGrid.CHARS;
+        this.cellHeight = parentHeight / WordGrid.LINES;
+        this.words = new Map<string, PIXI.Container[]>();
+        var wc = new PIXI.Container();
+        this.wordsContainer = wc;
+        this.addChild(wc);
+    }
+
+    public drawGrid(): void {
+        var draw = new PIXI.Graphics();
+        this.addChild(draw);
+        draw.beginFill(0xffffff);
+        draw.x = this.x_start;
+        draw.y = this.y_start;
+        draw.lineStyle(2);
+        for (var i = 0; i < WordGrid.LINES; i++){
+            for (var j = 0; j < WordGrid.CHARS; j++){
+                draw.drawShape(
+                    new PIXI.Rectangle(j * this.cellWidth, i * this.cellHeight,
+                                       this.cellWidth, this.cellHeight));
+            }
+        }
+        draw.endFill();
+    }
+
+    public addLine(line: string): void {
+        var splitted = line.split("#").filter(function (el) {
+            return el != "";
+        });
+        this.shiftLine();
+        var i = 0;
+        var prevSep = false;
+        var currWord = 0;
+        var curSprites: PIXI.Text[] = [];
+        while (i < WordGrid.CHARS) {
+            if (line.charAt(i) == '#') {
+                i++;
+                if (prevSep)
+                    continue;
+                else {
+                    this.words.set(splitted[currWord], curSprites);
+                    currWord++;
+                    curSprites = [];
+                    prevSep = true;
+                    continue;
+                }
+            }
+            const letterSprite = new PIXI.Text(
+                line.charAt(i), {fontFamily: 'monospace', fontSize: 30});
+            letterSprite.width = this.cellWidth;
+            letterSprite.height = this.cellHeight;
+            letterSprite.y = this.y_start;
+            letterSprite.x = this.x_start + (i * this.cellWidth);
+            curSprites.push(letterSprite);
+            this.wordsContainer.addChild(letterSprite);
+            i++;
+            prevSep = false;
+        }
+        // insert last word
+        this.words.set(splitted[currWord], curSprites);
+    }
+
+    public shiftLine(): void {
+        for (var i = 0; i < this.wordsContainer.children.length; i++){
+            this.wordsContainer.children[i].y += this.cellHeight;
+        }
+    }
+
+    public removeWord(word: string): void {
+        this.words.get(word)?.forEach(function (sp) {
+            sp.destroy();
+        })
     }
 }
