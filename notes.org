@@ -21,6 +21,8 @@ use profanity-filter python package
 as you type keys the first attack will move out until it is gone
 
 * Frontend 
+** TODO socket on "connect" problem
+reconnection causes problems should be design change also in backend
 ** TODO Fix Typescript relative imports
 ** TODO Use glow and bloom filters
 https://pixijs.io/pixi-filters/docs/PIXI.filters.html

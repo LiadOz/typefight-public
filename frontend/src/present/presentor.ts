@@ -25,6 +25,12 @@ export class Presenter implements IPresenter {
             this.model.startSoloGame();
             this.registerKeyboard();
         }
+        if (action == ViewAction.START_DUEL){
+            this.currView.remove();
+            this.currView = this.view.duelView();
+            this.model.startDuelGame();
+            this.registerKeyboard();
+        }
     }
 
     public acceptData(action: ModelAction, data: string) {

@@ -1,6 +1,7 @@
 export interface IModel {
     getPresenter(): IPresenter
     startSoloGame(): void;
+    startDuelGame(): void;
     sendLetter(letter: string): void;
     removeLetter(): void;
     publishWord(): void;
@@ -35,6 +36,7 @@ export interface IMenu extends IView {
 
 export enum ViewAction {
     START_SOLO,
+    START_DUEL,
 }
 
 export enum ModelAction {

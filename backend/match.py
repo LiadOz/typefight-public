@@ -4,38 +4,45 @@ from backend.user import IdStore
 from enum import Enum
 
 
+class MatchType(Enum):
+    SOLO = 'SOLO'
+    SOLO_DUEL = 'SOLO_DUEL'
+    DUEL = 'DUEL'
+    ROYALE = 'ROYALE'
+
+    @classmethod
+    def parse_match(cls, match_type):
+        for m_type in MatchType:
+            if m_type.value == match_type:
+                return m_type
+        raise RuntimeError(f'Unknown match type {match_type}')
+
+
 class MatchCreator:
     def __init__(self, object_factory):
         self.object_factory = object_factory
-        self.current_match = match_factory(MatchType.SOLO_DUEL)(
-            object_factory.create_user)
+        self.open_matches = {}
         self.id_store = IdStore()
-        self.pending_players = set()
+        self.pending_players = {}
 
     # this along the idstore should move to a class which handles login
-    def login_user(self):
+    def login_user(self, data):
         player_id = self.id_store.get_new_id()
-        self.pending_players.add(player_id)
+        match_type = data['match_type']
+        self.pending_players[player_id] = MatchType.parse_match(match_type)
         return player_id
 
     def logged_in(self, data):
         player_id = data['id']
-        self.get_match().add_player(player_id)
-        self.pending_players.remove(player_id)
+        match_type = self.pending_players.pop(player_id)
+        self.get_match(match_type).add_player(player_id)
 
-    def get_match(self):
-        status = self.current_match.get_status()
-        if status == MatchStatus.STARTED:
-            self.current_match = match_factory(MatchType.SOLO_DUEL)(
-                self.object_factory.create_user)
-        return self.current_match
-
-
-class MatchType(Enum):
-    SOLO = 1
-    SOLO_DUEL = 2
-    DUEL = 2
-    ROYALE = 100
+    def get_match(self, match_type):
+        match = self.open_matches.get(match_type)
+        if not match or match.get_status() == MatchStatus.STARTED:
+            match = match_factory(match_type)(self.object_factory.create_user)
+            self.open_matches[match_type] = match
+        return match
 
 
 class MatchStatus(Enum):
@@ -143,23 +150,23 @@ class TwoPlayerMatch(Match):
 
         for p_id, player in self.active_players.items():
             player.stop_playing()  # TODO no implementation
-            status = ps[p_id].value
-            if status == PlayerStatus.WINNER:
-                player.change_message('Game ended you won!')
-            elif status == PlayerStatus.LOSER:
-                player.change_message('Game ended you lost!')
+            status = ps[p_id]
+            if status is PlayerStatus.WINNER:
+                player.change_message('You won!')
+            elif status is PlayerStatus.LOSER:
+                player.change_message('You lost!')
             else:
                 player.change_message('Game ended with an error!')
 
 
 class DuelMatch(TwoPlayerMatch):
     def __init__(self, player_creator):
-        super().__init__(MatchType.DUEL.value, player_creator)
+        super().__init__(2, player_creator)
 
 
 class SoloDuelMatch(TwoPlayerMatch):
     def __init__(self, player_creator):
-        super().__init__(MatchType.SOLO_DUEL.value, player_creator)
+        super().__init__(2, player_creator)
         self.add_bot()
 
 

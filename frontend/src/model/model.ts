@@ -39,7 +39,11 @@ class LocalModel implements IModel {
     }
 
     public startSoloGame(): void {
-        this.entry.emit('login');
+        this.entry.emit('login', {'match_type': 'SOLO_DUEL'});
+    }
+
+    public startDuelGame(): void {
+        this.entry.emit('login', {'match_type': 'DUEL'});
     }
 
     public sendLetter(letter: string): void {

@@ -41,18 +41,30 @@ export class PIXIMenu extends PIXI.Container implements IMenu {
     }
 
     private addGames(): void {
-        var game = new PIXI.Text(
+        var solo = new PIXI.Text(
             'single player', {fontFamily: 'monospace', fontSize:30});
-        game.x = this.x_pos;
-        game.y = this.y_pos;
-        game.anchor.set(0.5);
+        solo.x = this.x_pos;
+        solo.y = this.y_pos;
+        solo.anchor.set(0.5);
 
-        game.buttonMode = true;
-        game.interactive = true;
-        game.on('pointerdown', () => {
+        solo.buttonMode = true;
+        solo.interactive = true;
+        solo.on('pointerdown', () => {
             this.manager.accept(ViewAction.START_SOLO);
         });
-        this.addChild(game);
+        var duel = new PIXI.Text(
+            'online game', {fontFamily: 'monospace', fontSize:30});
+        duel.x = this.x_pos;
+        duel.y = this.y_pos + 80;
+        duel.anchor.set(0.5);
+
+        duel.buttonMode = true;
+        duel.interactive = true;
+        duel.on('pointerdown', () => {
+            this.manager.accept(ViewAction.START_DUEL);
+        });
+        this.addChild(solo);
+        this.addChild(duel);
     }
 
     public remove(): void {
