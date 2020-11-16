@@ -9,7 +9,7 @@ class IPlayer:
 
     def attach_executor(self, executor):
         self.executor = executor
-        executor.register_player(self.u_id,
+        executor.register_user(self.u_id,
                                  create_player_data(self.player_data_type))
 
 

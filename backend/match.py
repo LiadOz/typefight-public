@@ -1,5 +1,5 @@
 from backend.game.player_factory import PlayerType
-from backend.game.executor import executor_factory, ExecutorType
+from backend.game.executor import executor_factory, ExecutorType, PlayerStatus
 from backend.user import IdStore
 from enum import Enum
 
@@ -74,6 +74,7 @@ class MatchStarter:
                 player.change_message(f'Starting in {sec}')
             sleep(1)
 
+        self.executor.start_game()
         for player in self.human_players:
             player.start_playing()
         for player in self.bot_players:
@@ -118,20 +119,50 @@ class Match:
         ms.start()
 
 
-class DuelMatch(Match):
+def end_callback(orig, added):
+    def _end_callback(*args, **kwargs):
+        orig(*args, **kwargs)
+        added()
+
+    return _end_callback
+
+
+class TwoPlayerMatch(Match):
+    def __init__(self, match_type, player_creator):
+        super().__init__(match_type, player_creator)
+        self.executor = executor_factory(ExecutorType.DUEL)
+
+        self.executor.end_game = end_callback(
+            self.executor.end_game, self._end_match)
+
+
+    def _end_match(self):
+        ps = self.executor.get_players_status()
+        for p_id, bot in self.active_bots.items():
+            bot.stop_playing()
+
+        for p_id, player in self.active_players.items():
+            player.stop_playing()  # TODO no implementation
+            status = ps[p_id].value
+            if status == PlayerStatus.WINNER:
+                player.change_message('Game ended you won!')
+            elif status == PlayerStatus.LOSER:
+                player.change_message('Game ended you lost!')
+            else:
+                player.change_message('Game ended with an error!')
+
+
+class DuelMatch(TwoPlayerMatch):
     def __init__(self, player_creator):
         super().__init__(MatchType.DUEL.value, player_creator)
-        self.executor = executor_factory(ExecutorType.DUEL)
 
 
-class SoloDuelMatch(Match):
+class SoloDuelMatch(TwoPlayerMatch):
     def __init__(self, player_creator):
         super().__init__(MatchType.SOLO_DUEL.value, player_creator)
-        self.executor = executor_factory(ExecutorType.DUEL)
         self.add_bot()
 
 
-# this should become human player
 class MatchPlayer:
     def __init__(self, player, player_id):
         self.player = player
@@ -141,6 +172,9 @@ class MatchPlayer:
         self.player.attach_executor(executor)
 
     def start_playing(self):
+        pass
+
+    def stop_playing(self):
         pass
 
 
@@ -168,3 +202,6 @@ class BotMatchPlayer(MatchPlayer):
 
     def start_playing(self):
         self.player.start_playing()
+
+    def stop_playing(self):
+        self.player.stop_playing()

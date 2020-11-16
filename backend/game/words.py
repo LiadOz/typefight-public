@@ -15,6 +15,9 @@ class WordsContainer:
     def get_data(self):
         pass
 
+    def get_status(self):
+        pass
+
 
 class WordQueue(WordsContainer):
     def __init__(self):

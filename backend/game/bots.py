@@ -9,7 +9,8 @@ from random import uniform, choice
 class BotPlayer(Player):
     def __init__(self, u_id, data_type):
         super().__init__(u_id, data_type)
-        self.set_speed(50)
+        self.running = False
+        self.set_speed(50 * 1)
 
     def set_speed(self, wpm):
         self.seconds = 60 / (wpm * 5)
@@ -23,15 +24,20 @@ class BotPlayer(Player):
             self.pause()
 
     def _run(self):
+        sleep(0.5)  # wait to be fair
         word = self._get_next_word()
-        while word:
+        while word and self.running:
             self.type_word(word)
             self.publish_word()
             self.pause()
             word = self._get_next_word()
 
     def start_playing(self):
+        self.running = True
         Thread(target=self._run).start()
+
+    def stop_playing(self):
+        self.running = False
 
 
 class QueueBot(BotPlayer):

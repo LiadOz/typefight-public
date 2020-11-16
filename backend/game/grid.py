@@ -22,15 +22,22 @@ class GridContainer(WordsContainer):
         # returns grid layout
         return self.grid.get_data()
 
+    def get_status(self):
+        return self.grid.LINES == self.grid.curr_lines()
+
 
 class Grid:
     LINE_WIDTH = 40
+    LINES = 20
 
     def __init__(self):
         self.word_to_line = {}
         self.cells = []
         self.lines = []
         self.available_lines = 0
+
+    def curr_lines(self):
+        return len(self.lines)
 
     def add_word(self, word):
         # adds a word to the grid
@@ -52,6 +59,8 @@ class Grid:
     def remove_word(self, word):
         line = self.word_to_line[word]
         line.remove_word(word)
+        if line.line_cleared():
+            self.lines.remove(line)
         self._update_accessible()
 
     def create_line(self):
@@ -134,6 +143,9 @@ class Line:
             return False
         return True
 
+    def line_cleared(self):
+        return len(self.words) == 0
+
     # Tries to add a word, if it cannot be added False is returned
     def try_add_word(self, word):
         ret = self.inserter.add_word(word)
@@ -146,6 +158,7 @@ class Line:
     def remove_word(self, word):
         if not self.closed:
             raise Exception('Cannot remove from open Line')
+        self.words.remove(word)
         self.cells.remove_word(word)
 
     def get_line(self):

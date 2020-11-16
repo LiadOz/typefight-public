@@ -165,7 +165,7 @@ class AttackView extends PIXI.Container {
         attack.y = this.y_start;
 
         this.attackGrid = new AttackGrid(
-            5, 2, AttackView.WIDTH, AttackView.HEIGHT);
+            2, 5, AttackView.WIDTH, AttackView.HEIGHT);
         this.attackGrid.x = x_start;
         this.attackGrid.y = y_start;
         this.addChild(this.attackGrid);

@@ -15,6 +15,7 @@ the data of a request will tell what function should be called
 ** TODO have a class that allows the player to view it's data
 ** TODO Register Users
 use profanity-filter python package
+
 * Backend features
 ** TODO When defending the attacks can refresh
 as you type keys the first attack will move out until it is gone
@@ -33,4 +34,5 @@ https://pixijs.io/pixi-filters/docs/PIXI.filters.html
 http://hippocurious.com/setup-a-cdn-to-speed-up-your-website
 ** TODO flask
 [[https://flask.palletsprojects.com/en/1.1.x/deploying/#deployment][link]]
+** TODO create production gulp task
 

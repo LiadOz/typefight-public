@@ -3,6 +3,7 @@ from backend.game.changes import PlayerChanges
 from backend.game.words import (WordQueue, WordsFormatter, WordSet,
                                 WordsFormatterQueue)
 from backend.game.grid import GridContainer
+from backend.game.end_game import EnderType, ender_factory
 from enum import Enum
 
 
@@ -46,23 +47,33 @@ class GameData:
     def add_fetcher(self, caller_id, fetcher):
         return self.mapping[caller_id].add_fetcher(fetcher)
 
+    def set_ender(self, caller_id, notifier):
+        return self.mapping[caller_id].get_ender().set_notifier(notifier)
+
 
 class PlayerData:
-    def __init__(self, attack_container, defend_container, formatter):
+    def __init__(self, attack_container, defend_container,
+                 formatter, ender_type):
         self.attack = attack_container()
         self.defend = defend_container()
         self.current_word = Word()
         self.formatter = formatter(self)
         self.changes = PlayerChanges()
+        self.ender = ender_factory(ender_type)(self.defend)
+
+    def get_ender(self):
+        return self.ender
 
     def add_word(self, w_type, word):
         details = self.get_container(w_type).add(word)
         self.changes.add_word(w_type, details)
+        self.ender.process_data()
         return True
 
     def remove_word(self, w_type, word):
         self.get_container(w_type).remove(word)
         self.changes.remove_word(w_type, word)
+        self.ender.process_data()
         return True
 
     def type_key(self, key):
@@ -98,7 +109,8 @@ class PlayerData:
 
 class PlayerDataQueue(PlayerData):
     def __init__(self):
-        super().__init__(WordQueue, WordQueue, WordsFormatterQueue)
+        super().__init__(WordQueue, WordQueue, WordsFormatterQueue,
+                         EnderType.NO_END)
         self.mode = WordType.DEFEND
 
     def publish_word(self):
@@ -141,7 +153,7 @@ class PlayerDataQueue(PlayerData):
 
 class PlayerDataSet(PlayerData):
     def __init__(self):
-        super().__init__(WordSet, WordSet, WordsFormatter)
+        super().__init__(WordSet, WordSet, WordsFormatter, EnderType.NO_END)
         self.mode = WordType.DEFEND
 
     def publish_word(self):
@@ -170,7 +182,8 @@ class PlayerDataSet(PlayerData):
 
 class PlayerDataGrid(PlayerData):
     def __init__(self):
-        super().__init__(WordSet, GridContainer, WordsFormatter)
+        super().__init__(WordSet, GridContainer, WordsFormatter,
+                         EnderType.GRID_LINE_ENDER)
         self.mode = WordType.DEFEND
 
     def publish_word(self):
