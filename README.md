@@ -1,4 +1,4 @@
-This is an early version of typefight visit https://typefight.me/ for current version,
+This is an early version of typepyt visit https://www.typepyt.com for current version,
 visit [this](https://liadozil.medium.com/creating-a-multiplayer-speed-typing-game-using-flask-socketio-and-celery-a3269a8f3e99) medium article to see the key parts.
 # typefight
 A speed typing multiplayer game where two players are dueling by attacking their
